@@ -67,8 +67,11 @@ const bot = new Client({
 
 
     const moodle = new MoodleInterface(winston, config);
-    await moodle.performLogin();
-    await moodle.rescheduleScrape();
 
-    await bot.login(config.token);
+    const startPromises = [
+        moodle.performLogin(),
+        bot.login(config.token)
+    ];
+
+    await Promise.all(startPromises).then(() => moodle.rescheduleScrape());
 })();
