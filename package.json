@@ -12,8 +12,13 @@
     "nodemon": "^2.0.12"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
     "discord.js": "^13.1.0",
+    "domhandler": "^4.2.2",
+    "moment": "^2.29.1",
     "node": "16.6.1",
+    "pdfjs-dist": "^2.9.359",
+    "request": "^2.88.2",
     "sql.js": "^1.6.1",
     "sqlite3": "^4.2.0",
     "winston": "^3.3.3"

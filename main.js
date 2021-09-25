@@ -2,6 +2,7 @@ import {Client, Intents} from "discord.js";
 import {joinHandler} from "./handler/verifyHandler.js";
 import {loadBotConfig} from "./support/config_loader.js";
 import winston from "winston";
+import {MoodleInterface} from "./moodle/moodleInterface.js";
 
 winston.configure({
     exitOnError: false,
@@ -64,6 +65,10 @@ const bot = new Client({
         joinHandler(message.author, bot, config);
     });
 
+
+    const moodle = new MoodleInterface(winston, config);
+    await moodle.performLogin();
+    await moodle.rescheduleScrape();
 
     await bot.login(config.token);
 })();
