@@ -5,7 +5,8 @@
   "author": "diesdasnicolas",
   "type": "module",
   "scripts": {
-    "start": "nodemon main.js"
+    "start": "nodemon main.js",
+    "debug": "node main.js"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"
