@@ -3,6 +3,17 @@ import * as fs from "./promise_fs.js";
 const CONFIG_PATH = "./config.json";
 const CONFIG_OVERRIDE_PATH = "./config.override.json";
 
+function merge(target, source) {
+    for (const key of Object.keys(source)) {
+        if (source[key] instanceof Object) {
+            Object.assign(source[key], merge(target[key], source[key]));
+        }
+    }
+
+    Object.assign(target || {}, source);
+    return target;
+}
+
 function readJson(path) {
     return fs.readFile(path).then((buffer) => JSON.parse(buffer.toString("utf-8")));
 }
@@ -16,5 +27,5 @@ export function loadBotConfig() {
     const configOverridePromise = loadJsonOrEmpty(CONFIG_OVERRIDE_PATH);
 
     return Promise.all([configPromise, configOverridePromise])
-        .then(([config, configOverride]) => Object.assign(config, configOverride));
+        .then(([config, configOverride]) => merge(config, configOverride));
 }

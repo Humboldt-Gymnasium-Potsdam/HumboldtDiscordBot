@@ -3,6 +3,7 @@ import {joinHandler} from "./handler/verifyHandler.js";
 import {loadBotConfig} from "./support/config_loader.js";
 import winston from "winston";
 import {MoodleInterface} from "./moodle/moodleInterface.js";
+import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
 
 winston.configure({
     exitOnError: false,
@@ -60,18 +61,22 @@ const bot = new Client({
     });
 
     bot.on("messageCreate", message => {
-        console.log("test");
-
-        joinHandler(message.author, bot, config);
+        if(!message.author.bot) {
+            joinHandler(message.author, bot, config);
+        }
     });
 
 
     const moodle = new MoodleInterface(winston, config);
+    const moodleSender = new MoodleDiscordSender(bot, config);
 
     const startPromises = [
         moodle.performLogin(),
         bot.login(config.token)
     ];
+
+    moodle.on("data", (data) => moodleSender.moodleDataReceived(data));
+    moodle.on("error", (error) => moodleSender.moodleError(error));
 
     await Promise.all(startPromises).then(() => moodle.rescheduleScrape());
 })();
