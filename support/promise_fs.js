@@ -7,5 +7,5 @@ export const readFile = util.promisify(fs.readFile);
 export const access = util.promisify(fs.access);
 
 export async function exists(path) {
-    return await access(path, constants.F_OK);
+    return await access(path, constants.F_OK).then(() => true).catch(() => false);
 }

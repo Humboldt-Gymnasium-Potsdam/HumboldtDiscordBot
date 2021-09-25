@@ -1,4 +1,4 @@
-import * as fs from "./promise_fs";
+import * as fs from "./promise_fs.js";
 
 const CONFIG_PATH = "./config.json";
 const CONFIG_OVERRIDE_PATH = "./config.override.json";

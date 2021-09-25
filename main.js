@@ -1,6 +1,24 @@
 import {Client, Intents} from "discord.js";
 import {joinHandler} from "./handler/verifyHandler.js";
-import {loadBotConfig} from "./support/config_loader";
+import {loadBotConfig} from "./support/config_loader.js";
+import winston from "winston";
+
+winston.configure({
+    exitOnError: false,
+    transports: [
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.colorize(),
+                winston.format.cli()
+            ),
+            handleExceptions: true,
+            level: "verbose"
+        }),
+    ],
+    level: process.env.HUMBOLDT_BOT_LOG_LEVEL ?? "info"
+});
+
+winston.info(`Logging with level ${winston.level}.`);
 
 // set the bot up
 const bot = new Client({
@@ -21,10 +39,13 @@ const bot = new Client({
 });
 
 (async () => {
+    winston.verbose("About to load configuration...");
     const config = await loadBotConfig();
+    winston.verbose(`Config: ${JSON.stringify(config, null, 4)}`);
+    winston.info("Configuration has been loaded!");
 
     bot.on("ready", () => {         // !!! CHECK IF THERE IS A DATABASE IF NOT CREATE ONE !!!
-        console.log("jes");
+        winston.info("Bot is up and running!");
     });
 
     bot.on("guildMemberAdd", member => {
