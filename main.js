@@ -41,6 +41,12 @@ const bot = new Client({
 (async () => {
     winston.verbose("About to load configuration...");
     const config = await loadBotConfig();
+
+    if(!config.token || typeof(config.token) !== "string" || config.token.trim().length < 1) {
+        winston.error("Missing discord token in application config!");
+        process.exit(1);
+    }
+
     winston.verbose(`Config: ${JSON.stringify(config, null, 4)}`);
     winston.info("Configuration has been loaded!");
 
