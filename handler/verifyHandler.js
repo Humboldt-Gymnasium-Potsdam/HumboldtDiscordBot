@@ -25,7 +25,7 @@ export async function joinHandler(member, bot, config) {
             return;
         }
 
-        userVerify(member, studentFirstName, studentLastName, studentClass, studentAktivTeam, bot)
+        userVerify(member, studentFirstName, studentLastName, studentClass, studentAktivTeam, bot, config);
         return;
     }
 
