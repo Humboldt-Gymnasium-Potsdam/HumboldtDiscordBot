@@ -6,8 +6,17 @@ import {MoodleInterface} from "./moodle/moodleInterface.js";
 import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
 import {DatabaseInterface} from "./support/databaseInterface.js";
 import {CommandRegistrar} from "./automations/commandRegistrar.js";
+import {CallbackManager} from "./support/callbackManager.js";
 
 winston.configure({
+    levels: {
+        error: 0,
+        warn: 1,
+        info: 2,
+        debug: 3,
+        verbose: 4,
+        silly: 5
+    },
     exitOnError: false,
     transports: [
         new winston.transports.Console({
@@ -16,7 +25,7 @@ winston.configure({
                 winston.format.cli()
             ),
             handleExceptions: true,
-            level: "verbose"
+            level: process.env.HUMBOLDT_BOT_LOG_LEVEL ?? "info"
         }),
     ],
     level: process.env.HUMBOLDT_BOT_LOG_LEVEL ?? "info"
@@ -58,7 +67,9 @@ const bot = new Client({
     const database = new DatabaseInterface(config);
     winston.info("Database has been set up!");
 
-    const commandRegistrar = new CommandRegistrar(config, bot, database);
+    const callbackManager = new CallbackManager();
+
+    const commandRegistrar = new CommandRegistrar(config, bot, database, callbackManager);
     const commandScanningPromise = commandRegistrar.scan();
 
     bot.on("ready", () => {

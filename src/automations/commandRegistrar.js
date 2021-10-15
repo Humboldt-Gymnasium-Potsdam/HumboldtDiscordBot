@@ -7,10 +7,11 @@ import {dirNameOfModule, formatError} from "../util/util.js";
 import {resolveElevatedPermissionRoles} from "../support/configLoader.js";
 
 export class CommandRegistrar {
-    constructor(config, bot, database) {
+    constructor(config, bot, database, callbackManager) {
         this.config = config;
         this.bot = bot;
         this.database = database;
+        this.callbackManager = callbackManager;
 
         this.rest = new REST({version: "9"}).setToken(config.token);
 
@@ -34,7 +35,8 @@ export class CommandRegistrar {
                 (file) => import(path.resolve(this.commandsDir, file)).then((module) => new module.default(
                     this.config,
                     this.bot,
-                    this.database
+                    this.database,
+                    this.callbackManager
                 ))
             )
         );
@@ -126,9 +128,15 @@ export class CommandRegistrar {
             const errorMessage = `The command failed to execute with an internal error:\n${formatError(e)}`;
 
             if(interaction.deferred) {
-                await interaction.editReply(errorMessage);
+                await interaction.editReply({
+                    content: errorMessage,
+                    components: []
+                });
             } else {
-                await interaction.reply(errorMessage);
+                await interaction.reply({
+                    content: errorMessage,
+                    components: []
+                });
             }
         }
     }

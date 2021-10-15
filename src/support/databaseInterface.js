@@ -32,11 +32,29 @@ export class DatabaseInterface {
         );
     }
 
-    async getRoleData(clazz) {
+    async getYearData(year) {
+        assertArgHasValue(year, "year");
+
+        return await this.getAsync(
+            "SELECT id FROM yearRoles WHERE year = $year AND class IS NULL", {$year: year}
+        )
+    }
+
+    async getClassData(clazz) {
         assertArgHasValue(clazz, "clazz");
 
         return await this.getAsync(
-            "SELECT (id, year) FROM yearRoles WHERE class = $clazz", {clazz}
+            "SELECT (id, year) FROM yearRoles WHERE class = $clazz", {$clazz: clazz}
+        );
+    }
+
+    async getYearAndClassData(year, clazz) {
+        assertArgHasValue(year, "year");
+        assertArgHasValue(clazz, "clazz");
+
+        return await this.getAsync(
+            "SELECT id FROM yearRoles WHERE year = $year AND class = $clazz",
+            {$year: year, $clazz: clazz}
         );
     }
 
@@ -44,7 +62,32 @@ export class DatabaseInterface {
         assertArgHasValue(name, "name");
 
         return await this.getAsync(
-            "SELECT id FROM teamRoles WHERE name = $name", {name}
+            "SELECT id FROM teamRoles WHERE name = $name", {$name: name}
+        );
+    }
+
+    async deleteYear(year) {
+        assertArgHasValue(year, "year");
+
+        return await this.runAsync(
+            "DELETE FROM yearRoles WHERE year = $year AND class IS NULL", {$year: year}
+        );
+    }
+
+    async deleteYearAndClass(year, clazz) {
+        assertArgHasValue(year, "year");
+        assertArgHasValue(clazz, "clazz");
+
+        return await this.runAsync(
+            "DELETE FROM yearRoles WHERE year = $year AND class = $class", {$year: year, $clazz: clazz}
+        );
+    }
+
+    async deleteTeam(name) {
+        assertArgHasValue(name, "name");
+
+        return await this.runAsync(
+            "DELETE FROM teamRoles WHERE name = $name", {$name: name}
         );
     }
 
