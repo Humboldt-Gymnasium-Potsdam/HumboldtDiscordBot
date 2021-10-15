@@ -110,5 +110,6 @@
       "HuHu": "746734678543",
       "HumboldtTage": "34565753467"
     }
-  }
+  },
+  "databasePath": "system-data.db"
 }

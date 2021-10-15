@@ -1,9 +1,10 @@
 import {Client, Intents} from "discord.js";
-import {joinHandler} from "./handler/verifyHandler.js";
+// import {joinHandler} from "./handler/verifyHandler.js";
 import {loadBotConfig} from "./support/configLoader.js";
 import winston from "winston";
 import {MoodleInterface} from "./moodle/moodleInterface.js";
 import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
+import {DatabaseInterface} from "./support/databaseInterface.js";
 
 winston.configure({
     exitOnError: false,
@@ -52,6 +53,10 @@ const bot = new Client({
     winston.verbose(`Config: ${JSON.stringify(config, null, 4)}`);
     winston.info("Configuration has been loaded!");
 
+    winston.verbose("About to set up database...");
+    const database = new DatabaseInterface(config);
+    winston.info("Database has been set up!");
+
     bot.on("ready", () => {
         winston.info("Bot is up and running!");
     });
@@ -62,7 +67,7 @@ const bot = new Client({
 
     bot.on("messageCreate", message => {
         if(!message.author.bot) {
-            joinHandler(message.author, bot, config);
+            // joinHandler(message.author, bot, config);
         }
     });
 
