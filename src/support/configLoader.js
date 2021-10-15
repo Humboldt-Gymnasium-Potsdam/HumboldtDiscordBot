@@ -1,4 +1,5 @@
 import * as fs from "./promiseFs.js";
+import {safeGet} from "../util/util.js";
 
 const CONFIG_PATH = "./config.json";
 const CONFIG_OVERRIDE_PATH = "./config.override.json";
@@ -28,4 +29,22 @@ export function loadBotConfig() {
 
     return Promise.all([configPromise, configOverridePromise])
         .then(([config, configOverride]) => merge(config, configOverride));
+}
+
+export function resolveElevatedPermissionRoles(config, ...permissions) {
+    const roles = [];
+
+    for(const permission of permissions) {
+        const rolesForPermission = safeGet(config, "roles", "elevatedPermissions", permission);
+
+        if(rolesForPermission !== null) {
+            for(const role of rolesForPermission) {
+                if(!(role in roles)) {
+                    roles.push(role);
+                }
+            }
+        }
+    }
+
+    return roles;
 }

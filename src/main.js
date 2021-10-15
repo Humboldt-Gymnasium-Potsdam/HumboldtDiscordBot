@@ -5,6 +5,7 @@ import winston from "winston";
 import {MoodleInterface} from "./moodle/moodleInterface.js";
 import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
 import {DatabaseInterface} from "./support/databaseInterface.js";
+import {CommandRegistrar} from "./automations/commandRegistrar.js";
 
 winston.configure({
     exitOnError: false,
@@ -57,6 +58,9 @@ const bot = new Client({
     const database = new DatabaseInterface(config);
     winston.info("Database has been set up!");
 
+    const commandRegistrar = new CommandRegistrar(config, bot);
+    const commandScanningPromise = commandRegistrar.scan();
+
     bot.on("ready", () => {
         winston.info("Bot is up and running!");
     });
@@ -67,10 +71,13 @@ const bot = new Client({
 
     bot.on("messageCreate", message => {
         if(!message.author.bot) {
-            // joinHandler(message.author, bot, config);
+            if(message.guild !== null && message.content === `<@!${bot.user.id}> reload-slash-commands`) {
+                commandScanningPromise
+                    .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
+                    .then(() => message.reply("Slash commands reloaded!"));
+            }
         }
     });
-
 
     const moodle = new MoodleInterface(winston, config);
     const moodleSender = new MoodleDiscordSender(bot, config);

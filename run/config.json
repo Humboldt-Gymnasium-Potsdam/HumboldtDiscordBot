@@ -18,6 +18,9 @@
     "scrapeInterval": 3600
   },
   "roles": {
+    "elevatedPermissions": {
+      "manageRoles": []
+    },
     "classes": {
       "5L": {
         "class": "132234234",

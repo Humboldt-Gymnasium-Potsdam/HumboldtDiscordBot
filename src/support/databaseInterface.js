@@ -1,5 +1,5 @@
 import sqlite from "sqlite3";
-import {assertArgHasValue} from "../util/assert";
+import {assertArgHasValue} from "../util/assert.js";
 
 export class DatabaseInterface {
     constructor(config) {
