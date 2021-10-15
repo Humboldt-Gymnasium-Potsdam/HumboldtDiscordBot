@@ -1,6 +1,6 @@
 import {Client, Intents} from "discord.js";
 import {joinHandler} from "./handler/verifyHandler.js";
-import {loadBotConfig} from "./support/config_loader.js";
+import {loadBotConfig} from "./support/configLoader.js";
 import winston from "winston";
 import {MoodleInterface} from "./moodle/moodleInterface.js";
 import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
@@ -52,7 +52,7 @@ const bot = new Client({
     winston.verbose(`Config: ${JSON.stringify(config, null, 4)}`);
     winston.info("Configuration has been loaded!");
 
-    bot.on("ready", () => {         // !!! CHECK IF THERE IS A DATABASE IF NOT CREATE ONE !!!
+    bot.on("ready", () => {
         winston.info("Bot is up and running!");
     });
 

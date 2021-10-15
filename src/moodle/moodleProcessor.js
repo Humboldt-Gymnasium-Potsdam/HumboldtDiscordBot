@@ -1,5 +1,5 @@
 import * as Path from "path";
-import * as fs from "../support/promise_fs.js";
+import * as fs from "../support/promiseFs.js";
 import PDFJs from "pdfjs-dist/legacy/build/pdf.js";
 import {LessonRow, TableInformation, Week} from "./moodleData.js";
 
