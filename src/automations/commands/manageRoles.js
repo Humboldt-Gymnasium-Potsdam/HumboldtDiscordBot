@@ -262,8 +262,10 @@ export default class ManageRolesCommand {
                     return Promise.reject(new Error(`Role with id ${deletionTarget} not found`));
                 }).catch((err) => {
                     winston.error(`Failed to delete role ${deletionTarget}:\n${formatError(err)}`);
-                    buttonInteraction.followUp(
-                        `Deleting the role <@&${deletionTarget}> failed, you might need to manually delete it if it still exists`);
+                    buttonInteraction.followUp({
+                        content: `Deleting the role <@&${deletionTarget}> failed, you might need to manually delete it if it still exists`,
+                        ephemeral: true
+                    });
                 });
             }
 
