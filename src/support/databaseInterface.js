@@ -79,7 +79,7 @@ export class DatabaseInterface {
         assertArgHasValue(clazz, "clazz");
 
         return await this.runAsync(
-            "DELETE FROM yearRoles WHERE year = $year AND class = $class", {$year: year, $clazz: clazz}
+            "DELETE FROM yearRoles WHERE year = $year AND class = $clazz", {$year: year, $clazz: clazz}
         );
     }
 
