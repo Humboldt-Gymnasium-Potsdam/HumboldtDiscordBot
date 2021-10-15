@@ -20,7 +20,7 @@
   "roles": {
     "nameTemplates": {
       "year": "Jahrgang ${year}",
-      "class": "Klasse ${name}",
+      "class": "Klasse ${year}${name}",
       "team": "Aktivteam ${name}"
     },
     "elevatedPermissions": {

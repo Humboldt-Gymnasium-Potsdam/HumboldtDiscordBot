@@ -139,6 +139,11 @@ export default class ManageRolesCommand {
                 await interaction.editReply(`A ${name != null ? "class" : "year"} with this name exists already and has the group <@&${classData.id}>`);
                 return;
             }
+
+            if(name != null && name.length > 1) {
+                await interaction.editReply(`Class should only be a single letter, typically A, B, C or L`);
+                return;
+            }
         }
 
         const role = create ?
@@ -272,7 +277,7 @@ export default class ManageRolesCommand {
 
             await buttonInteraction.editReply({
                 content: `${isTeam ? "Team " : name != null ? "Class " : "Year "}${deleteRole ? "and" +
-                    " Role have" : "has"} been deleted!`,
+                    " role have" : "has"} been deleted!`,
                 components: []
             });
         }).catch(async (err) => {
