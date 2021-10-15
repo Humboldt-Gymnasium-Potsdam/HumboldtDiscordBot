@@ -13,6 +13,10 @@ export function safeGet(obj, ...propertyPath) {
     let currentTarget = obj;
 
     for(const part of propertyPath) {
+        if(currentTarget === null || currentTarget === undefined) {
+            return null;
+        }
+
         if(!(part in currentTarget)) {
             return null;
         }
@@ -21,4 +25,21 @@ export function safeGet(obj, ...propertyPath) {
     }
 
     return currentTarget;
+}
+
+export function formatError(error) {
+    if (!(error instanceof Error)) {
+        return `=> ${error.toString()}`;
+    } else {
+        if (!error.stack) {
+            return `=> ${error.message}`;
+        }
+
+        let buffer = `${error.message ?? "<no error message>"}\n`;
+        for (const stack of error.stack.split("\n")) {
+            buffer += `=> ${stack}\n`;
+        }
+
+        return buffer;
+    }
 }

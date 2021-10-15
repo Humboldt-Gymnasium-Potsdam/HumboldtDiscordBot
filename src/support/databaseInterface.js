@@ -8,8 +8,8 @@ export class DatabaseInterface {
     }
 
     ensureSetup() {
-        this.database.run("CREATE TABLE IF NOT EXISTS yearRoles (id TEXT NOT NULL, year INT NOT NULL, class TEXT)");
-        this.database.run("CREATE TABLE IF NOT EXISTS teamRoles (id TEXT NOT NULL, name TEXT NOT NULL)");
+        this.database.run("CREATE TABLE IF NOT EXISTS yearRoles (id TEXT NOT NULL PRIMARY KEY, year INT NOT NULL, class TEXT)");
+        this.database.run("CREATE TABLE IF NOT EXISTS teamRoles (id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)");
     }
 
     async importYearRole(id, year, clazz) {
@@ -17,7 +17,8 @@ export class DatabaseInterface {
         assertArgHasValue(year, "year");
 
         await this.runAsync(
-            "INSERT INTO yearRoles (id, year, class) VALUES ($id, $year, $clazz)", {id, year, clazz}
+            "INSERT INTO yearRoles (id, year, class) VALUES ($id, $year, $clazz)",
+            {$id: id, $year: year, $clazz: clazz}
         );
     }
 
@@ -26,8 +27,9 @@ export class DatabaseInterface {
         assertArgHasValue(name, "name");
 
         await this.runAsync(
-            "INSERT INTO teamRoles (id, name) VALUES ($id, $name)", {id, name}
-        )
+            "INSERT INTO teamRoles (id, name) VALUES ($id, $name)",
+            {$id: id, $name: name}
+        );
     }
 
     async getRoleData(clazz) {
@@ -43,7 +45,7 @@ export class DatabaseInterface {
 
         return await this.getAsync(
             "SELECT id FROM teamRoles WHERE name = $name", {name}
-        )
+        );
     }
 
     runAsync(stmt, ...args) {

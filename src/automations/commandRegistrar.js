@@ -1,16 +1,18 @@
-import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v9";
+import {REST} from "@discordjs/rest";
+import {Routes} from "discord-api-types/v9";
 import winston from "winston";
 import * as fs from "../support/promiseFs.js";
 import path from "path";
-import {dirNameOfModule} from "../util/util.js";
+import {dirNameOfModule, formatError} from "../util/util.js";
 import {resolveElevatedPermissionRoles} from "../support/configLoader.js";
 
 export class CommandRegistrar {
-    constructor(config, bot) {
+    constructor(config, bot, database) {
         this.config = config;
         this.bot = bot;
-        this.rest = new REST({ version: "9" }).setToken(config.token);
+        this.database = database;
+
+        this.rest = new REST({version: "9"}).setToken(config.token);
 
         this.commandsDir = path.resolve(dirNameOfModule(import.meta), "commands");
         this.commandMapping = new Map();
@@ -29,7 +31,11 @@ export class CommandRegistrar {
 
         const commands = await Promise.all(
             files.map(
-                (file) => import(path.resolve(this.commandsDir, file)).then((module) => new module.default())
+                (file) => import(path.resolve(this.commandsDir, file)).then((module) => new module.default(
+                    this.config,
+                    this.bot,
+                    this.database
+                ))
             )
         );
         winston.verbose("Command modules have been instantiated!");
@@ -63,19 +69,19 @@ export class CommandRegistrar {
 
         const commands = await guild.commands.fetch();
         commands.forEach((commandScope) => {
-            if(commandScope.applicationId !== this.bot.application.id) {
+            if (commandScope.applicationId !== this.bot.application.id) {
                 return;
             }
 
             const commandName = commandScope.name;
             const command = this.commandMapping.get(commandName);
 
-            if(command === null) {
+            if (command === null) {
                 winston.warn(`Guild ${guildId} has a command ${commandName} which is from this bot, but not registered as a Javascript file?!`);
                 return;
             }
 
-            if(command.getRequiredPermissions === null || command.getRequiredPermissions === undefined) {
+            if (command.getRequiredPermissions === null || command.getRequiredPermissions === undefined) {
                 winston.verbose(`Command ${commandName} has no permission requirements, skipping update!`);
                 return;
             }
@@ -101,5 +107,29 @@ export class CommandRegistrar {
         await guild.commands.permissions.set({
             fullPermissions: permissionUpdates
         });
+    }
+
+    async handleInteraction(interaction) {
+        const commandName = interaction.commandName;
+        const command = this.commandMapping.get(commandName);
+
+        if (command === null) {
+            winston.warn(`Received interaction for command ${commandName} which does not belong to this bot!`);
+            return;
+        }
+
+        try {
+            await command.execute(interaction);
+        } catch (e) {
+            winston.error(`Command failed to execute: ${e}`);
+
+            const errorMessage = `The command failed to execute with an internal error:\n${formatError(e)}`;
+
+            if(interaction.deferred) {
+                await interaction.editReply(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
+            }
+        }
     }
 }

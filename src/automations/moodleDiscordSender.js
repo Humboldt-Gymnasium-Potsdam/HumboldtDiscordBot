@@ -1,6 +1,7 @@
 import * as Discord from "discord.js";
 import {TableInformation} from "../moodle/moodleData.js";
 import winston from "winston";
+import {formatError} from "../util/util.js";
 
 export class MoodleDiscordSender {
     static processClassPing(input, config) {
@@ -59,24 +60,7 @@ Zuletzt aktualisiert: <t:${Math.floor(data.processedAt.toDate().getTime() / 1000
     }
 
     moodleError(error) {
-        const formatted = (() => {
-            if (!(error instanceof Error)) {
-                return `=> ${error.toString()}`;
-            } else {
-                if (!error.stack) {
-                    return `=> ${error.message}`;
-                }
-
-                let buffer = `${error.message ?? "<no error message>"}\n`;
-                for (const stack of error.stack.split("\n")) {
-                    buffer += `=> ${stack}\n`;
-                }
-
-                return buffer;
-            }
-        })();
-
-        return this.sendMessageToMoodleChannels(formatted);
+        return this.sendMessageToMoodleChannels(formatError(error));
     }
 
     async sendMessageToMoodleChannels(data) {

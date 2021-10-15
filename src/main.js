@@ -58,7 +58,7 @@ const bot = new Client({
     const database = new DatabaseInterface(config);
     winston.info("Database has been set up!");
 
-    const commandRegistrar = new CommandRegistrar(config, bot);
+    const commandRegistrar = new CommandRegistrar(config, bot, database);
     const commandScanningPromise = commandRegistrar.scan();
 
     bot.on("ready", () => {
@@ -76,6 +76,12 @@ const bot = new Client({
                     .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
                     .then(() => message.reply("Slash commands reloaded!"));
             }
+        }
+    });
+
+    bot.on("interactionCreate", (interaction) => {
+        if(interaction.isCommand()) {
+            commandRegistrar.handleInteraction(interaction);
         }
     });
 

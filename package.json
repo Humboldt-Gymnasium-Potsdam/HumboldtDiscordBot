@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "cd run && nodemon ../src/main.js",
-    "debug": "cd run && node ../src/main.js"
+    "debug": "cd run && cross-env NODE_ENV=development node ../src/main.js"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^2.0.12"
   },
   "dependencies": {

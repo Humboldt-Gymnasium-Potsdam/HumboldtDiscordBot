@@ -18,6 +18,11 @@
     "scrapeInterval": 3600
   },
   "roles": {
+    "nameTemplates": {
+      "year": "Jahrgang ${year}",
+      "class": "Klasse ${name}",
+      "team": "Aktivteam ${name}"
+    },
     "elevatedPermissions": {
       "manageRoles": []
     },

@@ -48,3 +48,23 @@ export function resolveElevatedPermissionRoles(config, ...permissions) {
 
     return roles;
 }
+
+export function resolveTemplateString(config, ...pathAndArgs) {
+    if(pathAndArgs < 2) {
+        throw new Error("the path to the config property must consist at least of one segment followed by properties");
+    }
+
+    const path = pathAndArgs.slice(0, pathAndArgs.length - 1);
+    const properties = pathAndArgs[pathAndArgs.length - 1];
+
+    let template = safeGet(config, ...path);
+    if(template === null) {
+        return "";
+    }
+
+    for(const property of Object.keys(properties)) {
+        template = template.replace("${" + property + "}", properties[property]);
+    }
+
+    return template;
+}
