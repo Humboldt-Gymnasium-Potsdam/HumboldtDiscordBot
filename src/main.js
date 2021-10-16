@@ -6,7 +6,8 @@ import {MoodleInterface} from "./moodle/moodleInterface.js";
 import {MoodleDiscordSender} from "./automations/moodleDiscordSender.js";
 import {DatabaseInterface} from "./support/databaseInterface.js";
 import {CommandRegistrar} from "./automations/commandRegistrar.js";
-import {CallbackManager} from "./support/callbackManager.js";
+import {CallbackManager} from "./manager/callbackManager.js";
+import {UserManager} from "./manager/userManager.js";
 
 winston.configure({
     levels: {
@@ -68,9 +69,11 @@ const bot = new Client({
     winston.info("Database has been set up!");
 
     const callbackManager = new CallbackManager();
+    const userManager = new UserManager(config, database);
 
     const commandRegistrar = new CommandRegistrar(config, bot, database, callbackManager);
     const commandScanningPromise = commandRegistrar.scan();
+
 
     bot.on("ready", () => {
         winston.info("Bot is up and running!");
@@ -82,10 +85,14 @@ const bot = new Client({
 
     bot.on("messageCreate", message => {
         if(!message.author.bot) {
-            if(message.guild !== null && message.content === `<@!${bot.user.id}> reload-slash-commands`) {
-                commandScanningPromise
-                    .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
-                    .then(() => message.reply("Slash commands reloaded!"));
+            if(message.guild !== null) {
+                if(message.content === `<@!${bot.user.id}> reload-slash-commands`) {
+                    commandScanningPromise
+                        .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
+                        .then(() => message.reply("Slash commands reloaded!"));
+                } else if(message.content === `<@!${bot.user.id}> simulate-join`) {
+                    userManager.afterJoinHandler(message.member);
+                }
             }
         }
     });

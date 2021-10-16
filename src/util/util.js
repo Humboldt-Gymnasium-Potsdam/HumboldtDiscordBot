@@ -43,3 +43,22 @@ export function formatError(error) {
         return buffer;
     }
 }
+
+export function computeArrayPatches(array, patches) {
+    const result = {
+        add: [],
+        remove: []
+    };
+
+    for(const {value, belongs} of patches) {
+        const isCurrent = value in array;
+
+        if(isCurrent && !belongs) {
+            result.remove.push(value);
+        } else if(!isCurrent && belongs) {
+            result.add.push(value);
+        }
+    }
+
+    return result;
+}

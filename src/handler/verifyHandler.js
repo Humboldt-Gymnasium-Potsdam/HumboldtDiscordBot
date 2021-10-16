@@ -35,7 +35,7 @@ export async function joinHandler(member, bot, config) {
         const verifyEmbed = new MessageEmbed()
             .setColor(verifyColor)
             .setTitle("Verifizieren")
-            .setDescription("Bitte verifiziere dich, indem du **hier** deinen **vollen Namen** (wenn vorhanden auch deinen Zweitnamen) hineinschreibst. \n\n**Zum Beispiel ⇒** \`Max Manuel Mustermann\`")
+            .setDescription("Bitte verifiziere dich, indem du `/verify` nutzt.")
             .setFooter("Dies ist notwendig, um zu prüfen, ob du vom Humboldt Gymnasium bist")
             .setThumbnail("https://cdn.discordapp.com/attachments/577839440769318912/890260708980318278/HumboldtImage.png");
 
@@ -49,7 +49,7 @@ export async function joinHandler(member, bot, config) {
         // set error/does'nt work embed up
         const verifyInfoEmbed = new MessageEmbed()
             .setTitle("Verifizieren")
-            .setDescription(`Bitte schreibe ${bot.user.mention} mit deinem **vollen Namen** an, um verifiziert zu werden!`)
+            .setDescription("Bitte verifiziere dich, indem du `/verify` nutzt.")
             .setFooter("Dies ist notwendig, um zu prüfen, ob du vom Humboldt Gymnasium bist")
             .setThumbnail("https://cdn.discordapp.com/attachments/577839440769318912/890260708980318278/HumboldtImage.png");
 
