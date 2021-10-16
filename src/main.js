@@ -87,25 +87,29 @@ const bot = new Client({
         userManager.afterJoinHandler(member);
     });
 
-    bot.on("messageCreate", message => {
+    bot.on("messageCreate", (message) => {
         if(!message.author.bot) {
             if(message.guild !== null) {
-                switch (message.content) {
-                    case `<@!${bot.user.id}> reload-guild-slash-commands`:
-                        commandScanningPromise
-                            .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
-                            .then(() => message.reply("Guild slash commands reloaded!"));
-                        break;
+                const botManagers = config.botManagers;
 
-                    case `<@!${bot.user.id}> reload-global-slash-commands`:
-                        commandScanningPromise
-                            .then(() => commandRegistrar.registerGlobalCommands())
-                            .then(() => message.reply("Global slash commands reloaded!"));
-                        break;
+                if(botManagers != null && botManagers.includes(message.author.id)) {
+                    switch (message.content) {
+                        case `<@!${bot.user.id}> reload-guild-slash-commands`:
+                            commandScanningPromise
+                                .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
+                                .then(() => message.reply("Guild slash commands reloaded!"));
+                            break;
 
-                    case `<@!${bot.user.id}> simulate-join`:
-                        userManager.afterJoinHandler(message.member);
-                        break;
+                        case `<@!${bot.user.id}> reload-global-slash-commands`:
+                            commandScanningPromise
+                                .then(() => commandRegistrar.registerGlobalCommands())
+                                .then(() => message.reply("Global slash commands reloaded!"));
+                            break;
+
+                        case `<@!${bot.user.id}> simulate-join`:
+                            userManager.afterJoinHandler(message.member);
+                            break;
+                    }
                 }
             }
         }

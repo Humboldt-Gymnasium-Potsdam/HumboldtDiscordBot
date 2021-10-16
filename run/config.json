@@ -27,6 +27,7 @@
       "manage": []
     }
   },
+  "botManagers": ["302099567757754368", "538458510996930590"],
   "databasePath": "system-data.db",
   "colors": {
     "verifyRequest": "#28c15f"
