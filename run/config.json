@@ -24,7 +24,7 @@
       "team": "Aktivteam ${name}"
     },
     "elevatedPermissions": {
-      "manageRoles": []
+      "manage": []
     },
     "classes": {
       "5L": {

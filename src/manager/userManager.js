@@ -202,4 +202,133 @@ export class UserManager {
             ]);
         }
     }
+
+    async adjustTeamMembership(interaction, team, privileged, actionData) {
+        await interaction.deferReply({ephemeral: true});
+
+        const teamData = await this.database.getTeamData(team);
+        if(teamData == null) {
+            await interaction.editReply(`The team with the name ${team} does not exist!`);
+            return;
+        }
+
+        if(!await this.completeActionData(interaction, actionData)) {
+            return;
+        }
+
+        if(actionData.action === "join") {
+            const targetMembership = await this.database.getTeamMembershipForStudent(actionData.studentId, team);
+            if(targetMembership != null) {
+                await interaction.editReply("This person is already part of the team!");
+                return;
+            }
+
+            if(!privileged && !await this.checkCanManage(
+                interaction.user.id,
+                null,
+                team,
+                interaction.permissionLevel
+            )) {
+                await interaction.editReply("You don't have permission to perform this action!");
+                return;
+            }
+
+            await this.database.joinStudentToTeam(actionData.studentId, team, actionData.permissionLevel);
+            await interaction.editReply("The person has been successfully added to the team!");
+
+            if(actionData.userId != null) {
+                const member = await this.findMemberByUserId(actionData.userId);
+                if(member == null) {
+                    return;
+                }
+
+                await member.roles.add(teamData.id);
+            }
+        } else if(actionData.action === "remove") {
+            const targetMembership = await this.database.getTeamMembershipForStudent(actionData.studentId, team);
+            if(targetMembership == null) {
+                await interaction.editReply("This person is not part of the team!");
+                return;
+            }
+
+            if(!privileged && !await this.checkCanManage(
+                interaction.user.id,
+                actionData.studentId,
+                team
+            )) {
+                await interaction.editReply("You don't have permission to perform this action!");
+                return;
+            }
+
+            await this.database.removeStudentFromTeam(actionData.studentId, team);
+            await interaction.editReply("The person has been successfully removed from the team!");
+
+            if(actionData.userId != null) {
+                const member = await this.findMemberByUserId(actionData.userId);
+                if(member == null) {
+                    return;
+                }
+
+                await member.roles.remove(teamData.id);
+            }
+        }
+    }
+
+    findMemberByUserId(userId) {
+        return this.bot.guilds.fetch()
+            .then((guilds) => guilds.first().fetch())
+            .then((guild) => guild.members.fetch(userId))
+            .catch((err) => {
+                throw err;
+            });
+    }
+
+    async checkCanManage(managingUserId, targetStudentId, team, targetPermissionLevel = 0) {
+        const managingMembership = await this.database.getTeamMembershipForUser(managingUserId, team);
+        if(managingMembership == null || managingMembership.permissionLevel < targetPermissionLevel + 1) {
+            return false;
+        }
+
+        if(targetStudentId == null) {
+            return true;
+        }
+
+        const targetMembership = await this.database.getTeamMembershipForStudent(targetStudentId, team);
+        if(targetMembership == null) {
+            return true;
+        }
+
+        return targetMembership.permissionLevel < managingMembership.permissionLevel;
+    }
+
+    async completeActionData(interaction, actionData) {
+        if(actionData.userId != null) {
+            const studentData = await this.database.getStudentDataForUser(actionData.userId);
+            if(studentData == null) {
+                await interaction.editReply(`The user <@!${actionData.userId}> is not verified!`);
+                return false;
+            }
+
+            actionData.firstName = studentData.firstName;
+            actionData.secondName = studentData.secondName;
+            actionData.surname = studentData.surname;
+            actionData.studentId = studentData.id;
+        } else {
+            const studentData = await this.database.findStudent(
+                actionData.firstName,
+                actionData.secondName,
+                actionData.surname
+            );
+
+            if(studentData == null) {
+                await interaction.editReply("This student could not be found!");
+                return false;
+            }
+
+            actionData.studentId = studentData.studentId;
+            actionData.userId = studentData.userId;
+        }
+
+        return true;
+    }
 }

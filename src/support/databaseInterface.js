@@ -220,6 +220,55 @@ UNION
         );
     }
 
+    async getTeamMembershipForUser(userId, team) {
+        assertArgHasValue(userId, "userId");
+        assertArgHasValue(team, "team");
+
+        return await this.getAsync(
+`SELECT teamMembership.* FROM teamMembership
+    JOIN verified ON verified.id = $userId
+    JOIN students ON students.id = verified.studentId
+        WHERE teamMembership.studentId = students.id AND teamMembership.team = $team
+`,
+            {$userId: userId, $team: team}
+        )
+    }
+
+    async getTeamMembershipForStudent(studentId, team) {
+        assertArgHasValue(studentId, "studentId");
+        assertArgHasValue(team, "team");
+
+        return await this.getAsync(
+`SELECT teamMembership.* FROM teamMembership
+    JOIN students ON students.id = $studentId
+    WHERE teamMembership.team = $team
+`,
+            {$studentId: studentId, $team: team}
+        )
+    }
+
+    async joinStudentToTeam(studentId, team, permissionLevel) {
+        assertArgHasValue(studentId, "studentId");
+        assertArgHasValue(team, "team");
+        assertArgHasValue(permissionLevel, "permissionLevel");
+
+        await this.runAsync(
+            "INSERT INTO teamMembership (studentId, team, permissionLevel) VALUES ($studentId, $team," +
+            " $permissionLevel)",
+            {$studentId: studentId, $team: team, $permissionLevel: permissionLevel}
+        )
+    }
+
+    async removeStudentFromTeam(studentId, team) {
+        assertArgHasValue(studentId, "studentId");
+        assertArgHasValue(team, "team");
+
+        await this.runAsync(
+            "DELETE FROM teamMembership WHERE studentId = $studentId AND team = $team",
+            {$studentId: studentId, $team: team}
+        )
+    }
+
     runAsync(stmt, ...args) {
         return new Promise((resolve, reject) => {
             let completed = false;

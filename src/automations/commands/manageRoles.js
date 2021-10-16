@@ -91,7 +91,7 @@ export default class ManageRolesCommand {
     }
 
     getRequiredPermissions() {
-        return ["manageRoles"];
+        return ["manage"];
     }
 
     async execute(interaction) {
