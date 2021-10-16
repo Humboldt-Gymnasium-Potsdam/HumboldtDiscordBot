@@ -16,8 +16,9 @@ export class DatabaseInterface {
             " TEXT NOT NULL, secondName TEXT, surname TEXT NOT NULL, class TEXT, year INTEGER NOT NULL)");
         this.database.run("CREATE TABLE IF NOT EXISTS verified (id TEXT NOT NULL PRIMARY KEY, studentId INTEGER NOT NULL" +
             ", FOREIGN KEY(studentId) REFERENCES students(id))");
-        this.database.run("CREATE TABLE IF NOT EXISTS teamMembership (userId TEXT NOT NULL, team TEXT NOT NULL," +
-            " PRIMARY KEY(userId, team), FOREIGN KEY(userId) REFERENCES verified(id), FOREIGN KEY(team)" +
+        this.database.run("CREATE TABLE IF NOT EXISTS teamMembership (studentId TEXT NOT NULL, team TEXT NOT NULL," +
+            " permissionLevel INTEGER NOT NULL," +
+            " PRIMARY KEY(studentId, team), FOREIGN KEY(studentId) REFERENCES students(id), FOREIGN KEY(team)" +
             " REFERENCES teamRoles(name))");
     }
 
@@ -159,7 +160,8 @@ WHERE firstName = $firstName
         return await this.allAsync(
 `SELECT teamRoles.id FROM teamRoles
     JOIN verified ON verified.id = $userId
-    JOIN teamMembership ON teamMembership.userId = verified.id
+    JOIN students ON students.id = verified.studentId
+    JOIN teamMembership ON teamMembership.studentId = students.id
 UNION
     SELECT yearRoles.id FROM yearRoles
         JOIN verified ON verified.id = $userId
@@ -199,7 +201,8 @@ UNION
     id IN (
         SELECT teamRoles.id FROM teamRoles
             JOIN verified ON verified.id = $userId
-            JOIN teamMembership ON teamMembership.userId = verified.id
+            JOIN students ON students.id = verified.studentId
+            JOIN teamMembership ON teamMembership.studentId = students.id
         UNION
             SELECT yearRoles.id FROM yearRoles
                 JOIN verified ON verified.id = $userId
