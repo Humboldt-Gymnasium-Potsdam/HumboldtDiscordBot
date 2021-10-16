@@ -13,7 +13,7 @@ export class DatabaseInterface {
         this.database.run("CREATE TABLE IF NOT EXISTS teamRoles (id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)");
         this.database.run("CREATE TABLE IF NOT EXISTS students (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
             " firstName" +
-            " TEXT NOT NULL, secondName TEXT, surName TEXT NOT NULL, class TEXT, year INTEGER NOT NULL)");
+            " TEXT NOT NULL, secondName TEXT, surname TEXT NOT NULL, class TEXT, year INTEGER NOT NULL)");
         this.database.run("CREATE TABLE IF NOT EXISTS verified (id TEXT NOT NULL PRIMARY KEY, studentId INTEGER NOT NULL" +
             ", FOREIGN KEY(studentId) REFERENCES students(id))");
         this.database.run("CREATE TABLE IF NOT EXISTS teamMembership (userId TEXT NOT NULL, team TEXT NOT NULL," +
@@ -109,26 +109,35 @@ export class DatabaseInterface {
         );
     }
 
-    async findStudent(firstName, secondName, surName) {
+    async findStudent(firstName, secondName, surname) {
         assertArgHasValue(firstName, "firstName");
-        assertArgHasValue(surName, "surName");
+        assertArgHasValue(surname, "surname");
 
         if(secondName == null) {
             return await this.getAsync(
-                "SELECT * FROM students WHERE firstName = $firstName AND surName = $surName",
+`SELECT students.id AS studentId, firstName, secondName, surname, class, year, verified.id AS userId
+FROM students
+         LEFT JOIN verified ON verified.studentId = students.id
+WHERE firstName = $firstName
+  AND surname = $surname`,
                 {
                     $firstName: firstName,
-                    $surName: surName
+                    $surname: surname
                 }
             );
         } else {
 
             return await this.getAsync(
-                "SELECT * FROM students WHERE firstName = $firstName AND secondName = $secondName AND surName = $surName",
+`SELECT students.id AS studentId, firstName, secondName, surname, class, year, verified.id AS userId
+FROM students
+    LEFT JOIN verified ON verified.studentId = students.id
+WHERE firstName = $firstName
+    AND secondName = $secondName
+    AND surname = $surname`,
                 {
                     $firstName: firstName,
                     $secondName: secondName,
-                    $surName: surName
+                    $surname: surname
                 }
             );
         }

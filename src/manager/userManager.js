@@ -10,8 +10,10 @@ export class UserManager {
     }
 
     async afterJoinHandler(user) {
-        if (await this.database.getStudentDataForUser(user.id) != null) {
-            await this.applyRoles(user);
+        const studentData = await this.database.getStudentDataForUser(user.id);
+
+        if (studentData != null) {
+            await this.applyVerifiedData(user,  studentData);
             return;
         }
 
@@ -52,15 +54,15 @@ export class UserManager {
             return;
         }
 
-        let studentInformation = await this.database.findStudent(firstName, secondName, surname);
+        let studentData = await this.database.findStudent(firstName, secondName, surname);
         let withoutSecondName = false;
 
-        if (studentInformation == null) {
-            studentInformation = await this.database.findStudent(firstName, null, surname);
+        if (studentData == null) {
+            studentData = await this.database.findStudent(firstName, null, surname);
             withoutSecondName = true;
         }
 
-        if (studentInformation == null) {
+        if (studentData == null) {
             if (secondName == null) {
                 await interaction.editReply("Leider kann ich dich nicht finden. Stelle sicher, dass du " +
                     "deinen Namen richtig geschrieben hast, und wenn vorhanden, auch deinen Zweitnamen angibst.");
@@ -68,6 +70,10 @@ export class UserManager {
                 await interaction.editReply("Leider kann ich dich nicht finden. Stelle sicher, dass du " +
                     "deinen Namen richtig geschrieben hast.");
             }
+            return;
+        } else if(studentData.userId != null) {
+            await interaction.editReply("Unter diesem Namen ist schon ein Nutzer registriert. Bitte wende dich " +
+                "an einen Administrator, wenn das nicht richtig ist!");
             return;
         }
 
@@ -83,10 +89,10 @@ export class UserManager {
             verifyEmbed.addField("Zweitname", secondName);
         }
         verifyEmbed.addField("Nachname", surname);
-        verifyEmbed.addField("Klassenstufe", studentInformation.year.toString(), true);
+        verifyEmbed.addField("Klassenstufe", studentData.year.toString(), true);
 
-        if(studentInformation["class"] != null && studentInformation["class"].length > 0) {
-            verifyEmbed.addField("Klasse", studentInformation["class"], true);
+        if(studentData["class"] != null && studentData["class"].length > 0) {
+            verifyEmbed.addField("Klasse", studentData["class"], true);
         }
 
         if (withoutSecondName) {
@@ -122,19 +128,21 @@ export class UserManager {
                 return;
             }
 
-            winston.info(`Successfully verified user ${interaction.user.id} with student id ${studentInformation.id}`);
+            winston.info(`Successfully verified user ${interaction.user.id} with student id ${studentData.studentId}`);
             await buttonInteraction.deferUpdate();
-            await this.database.completeVerification(interaction.user.id, studentInformation.id);
+            await this.database.completeVerification(interaction.user.id, studentData.studentId);
+
+            let member;
 
             if (interaction.member != null) {
-                await this.applyRoles(interaction.member);
+                member = interaction.member;
             } else {
-                const member = await this.bot.guilds.fetch()
+                member = await this.bot.guilds.fetch()
                     .then((guilds) => guilds.first().fetch())
                     .then((guild) => guild.members.fetch(interaction.user));
-
-                await this.applyRoles(member);
             }
+
+            await this.applyVerifiedData(member, studentData);
 
             await buttonInteraction.editReply({
                 content: "Alles klar, deine Rollen wurden dir zugewiesen. Viel Spaß!",
@@ -156,7 +164,14 @@ export class UserManager {
         });
     }
 
-    async applyRoles(user, extensive = false) {
+    async applyVerifiedData(user, studentData, extensive = false) {
+        const newNickname = `${studentData.firstName} ${studentData.secondName != null ? studentData.secondName + " " : ""}${studentData.surname}`;
+        winston.debug(`Renaming verified user ${user.id} to ${newNickname}`);
+
+        if(user.id !== user.guild.ownerId) {
+            await user.setNickname(newNickname);
+        }
+
         winston.debug(`Applying roles to user ${user.id}, extensive = ${extensive}`);
         if (!extensive) {
             const roleIdsObjs = await this.database.getRolesForUser(user.id);
