@@ -164,6 +164,25 @@ export class UserManager {
         });
     }
 
+    async reloadUserData(interaction, userId) {
+        await interaction.deferReply({ephemeral: true});
+
+        const studentData = await this.database.getStudentDataForUser(userId);
+        if(studentData == null) {
+            await interaction.editReply("This user is not verified, can't reload data!");
+            return;
+        }
+
+        const user = await this.findMemberByUserId(userId);
+        if(user == null) {
+            await interaction.editReply("This user is currently not on this guild!");
+            return;
+        }
+
+        await this.applyVerifiedData(user, studentData, true);
+        await interaction.editReply("Data reloaded successfully!");
+    }
+
     async applyVerifiedData(user, studentData, extensive = false) {
         const newNickname = `${studentData.firstName} ${studentData.secondName != null ? studentData.secondName + " " : ""}${studentData.surname}`;
         winston.debug(`Renaming verified user ${user.id} to ${newNickname}`);
@@ -185,7 +204,7 @@ export class UserManager {
             winston.verbose(`user = ${user.id}, roles = [${roleIds.join(", ")}]`);
             await user.roles.add(roleIds);
         } else {
-            const currentUserRoles = await user.roles.fetch().then((roles) => roles.map((role) => role.id));
+            const currentUserRoles = await user.fetch().then((user) => user.roles.cache.map((role) => role.id));
 
             winston.verbose(`Performing complete role listing for ${user.id}...`);
             const roleListing = await this.database.getCompleteRoleListingForUser(user.id)
@@ -196,10 +215,8 @@ export class UserManager {
             winston.verbose(`Roles to remove from ${user.id}: [${patches.remove.join(", ")}]`);
             winston.verbose(`Roles to add to ${user.id}     : [${patches.add.join(", ")}]`);
 
-            await Promise.all([
-                user.roles.remove(patches.remove, "Updating associated roles"),
-                user.roles.add(patches.add, "Updating associated roles")
-            ]);
+            await user.roles.remove(patches.remove, "Updating associated roles");
+            await user.roles.add(patches.add, "Updating associated roles")
         }
     }
 
@@ -253,7 +270,7 @@ export class UserManager {
 
             if(!privileged && !await this.checkCanManage(
                 interaction.user.id,
-                actionData.studentId,
+                targetMembership,
                 team
             )) {
                 await interaction.editReply("You don't have permission to perform this action!");
@@ -271,6 +288,25 @@ export class UserManager {
 
                 await member.roles.remove(teamData.id);
             }
+        } else if(actionData.action === "setPermissionLevel") {
+            const targetMembership = await this.database.getTeamMembershipForStudent(actionData.studentId, team);
+            if(targetMembership == null) {
+                await interaction.editReply("This person is not part of the team!");
+                return;
+            }
+
+            if(!privileged && !await this.checkCanManage(
+                interaction.user.id,
+                targetMembership,
+                team,
+                actionData.permissionLevel
+            )) {
+                await interaction.editReply("You don't have permission to perform this action!");
+                return;
+            }
+
+            await this.database.changeTeamPermissionLevel(actionData.studentId, team, actionData.permissionLevel);
+            await interaction.editReply("The permission level for this person has been changed!");
         }
     }
 
@@ -287,17 +323,12 @@ export class UserManager {
             });
     }
 
-    async checkCanManage(managingUserId, targetStudentId, team, targetPermissionLevel = 0) {
+    async checkCanManage(managingUserId, targetMembership, team, targetPermissionLevel = 0) {
         const managingMembership = await this.database.getTeamMembershipForUser(managingUserId, team);
         if(managingMembership == null || managingMembership.permissionLevel < targetPermissionLevel + 1) {
             return false;
         }
 
-        if(targetStudentId == null) {
-            return true;
-        }
-
-        const targetMembership = await this.database.getTeamMembershipForStudent(targetStudentId, team);
         if(targetMembership == null) {
             return true;
         }

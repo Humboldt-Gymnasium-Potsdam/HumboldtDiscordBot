@@ -84,6 +84,27 @@ export default class ManageUserCommand {
                     .addStringOption(surnameOption)
                     .addStringOption(secondNameOption)
                 )
+                .addSubcommand((command) => command
+                    .setName("set-user-permission-level")
+                    .setDescription("Changes the permission level for a discord user")
+                    .addStringOption(teamOption)
+                    .addUserOption(userOption)
+                    .addNumberOption(permissionLevelOption)
+                )
+                .addSubcommand((command) => command
+                    .setName("set-student-permission-level")
+                    .setDescription("Changes the permission level for a student")
+                    .addStringOption(teamOption)
+                    .addStringOption(firstNameOption)
+                    .addStringOption(surnameOption)
+                    .addNumberOption(permissionLevelOption)
+                    .addStringOption(secondNameOption)
+                )
+            )
+            .addSubcommand((command) => command
+                .setName("reload-data")
+                .setDescription("Reloads the roles and user name for a user")
+                .addUserOption(userOption)
             )
     }
 
@@ -92,31 +113,58 @@ export default class ManageUserCommand {
     }
 
     async execute(interaction) {
-        const subcommandGroup = interaction.options.getSubcommandGroup();
         const subcommand = interaction.options.getSubcommand();
+        if(subcommand === "reload-data") {
+            await this.userManager.reloadUserData(interaction, interaction.options.get("user").value);
+            return;
+        }
+
+        const subcommandGroup = interaction.options.getSubcommandGroup();
 
         if(subcommandGroup === "team") {
             const actionData = {};
             const team = interaction.options.get("team").value;
 
-            if(subcommand === "join-user") {
-                actionData.action = "join";
-                actionData.userId = interaction.options.get("user").value;
-                actionData.permissionLevel = interaction.options.get("permission-level").value;
-            } else if(subcommand === "join-student") {
-                actionData.action = "join";
-                actionData.firstName = interaction.options.get("first-name").value;
-                actionData.secondName = interaction.options.get("second-name")?.value;
-                actionData.surname = interaction.options.get("surname").value;
-                actionData.permissionLevel = interaction.options.get("permission-level").value;
-            } else if(subcommand === "remove-user") {
-                actionData.action = "remove";
-                actionData.userId = interaction.options.get("user").value;
-            } else if(subcommand === "remove-student") {
-                actionData.action = "remove";
-                actionData.firstName = interaction.options.get("first-name").value;
-                actionData.secondName = interaction.options.get("second-name")?.value;
-                actionData.surname = interaction.options.get("surname").value;
+            switch (subcommand) {
+                case "join-user":
+                    actionData.action = "join";
+                    actionData.userId = interaction.options.get("user").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    break;
+
+                case "join-student":
+                    actionData.action = "join";
+                    actionData.firstName = interaction.options.get("first-name").value;
+                    actionData.secondName = interaction.options.get("second-name")?.value;
+                    actionData.surname = interaction.options.get("surname").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    break;
+
+                case "remove-user":
+                    actionData.action = "remove";
+                    actionData.userId = interaction.options.get("user").value;
+                    break;
+
+                case "remove-student":
+                    actionData.action = "remove";
+                    actionData.firstName = interaction.options.get("first-name").value;
+                    actionData.secondName = interaction.options.get("second-name")?.value;
+                    actionData.surname = interaction.options.get("surname").value;
+                    break;
+
+                case "set-user-permission-level":
+                    actionData.action = "setPermissionLevel";
+                    actionData.userId = interaction.options.get("user").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    break;
+
+                case "set-student-permission-level":
+                    actionData.action = "setPermissionLevel";
+                    actionData.firstName = interaction.options.get("first-name").value;
+                    actionData.secondName = interaction.options.get("second-name")?.value;
+                    actionData.surname = interaction.options.get("surname").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    break;
             }
 
             await this.userManager.adjustTeamMembership(interaction, team, true, actionData);

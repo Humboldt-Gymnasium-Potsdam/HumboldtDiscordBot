@@ -51,7 +51,7 @@ export function computeArrayPatches(array, patches) {
     };
 
     for(const {value, belongs} of patches) {
-        const isCurrent = value in array;
+        const isCurrent = array.indexOf(value) !== -1;
 
         if(isCurrent && !belongs) {
             result.remove.push(value);

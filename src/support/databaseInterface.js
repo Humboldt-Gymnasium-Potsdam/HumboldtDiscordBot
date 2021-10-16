@@ -269,6 +269,18 @@ UNION
         )
     }
 
+    async changeTeamPermissionLevel(studentId, team, newPermissionLevel) {
+        assertArgHasValue(studentId, "studentId");
+        assertArgHasValue(team, "team");
+        assertArgHasValue(newPermissionLevel, "newPermissionLevel");
+
+        await this.runAsync(
+            "UPDATE teamMembership SET permissionLevel = $newPermissionLevel WHERE team = $team AND studentId =" +
+            " $studentId",
+            {$newPermissionLevel: newPermissionLevel, $team: team, $studentId: studentId}
+        )
+    }
+
     runAsync(stmt, ...args) {
         return new Promise((resolve, reject) => {
             let completed = false;
