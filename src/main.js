@@ -83,8 +83,8 @@ const bot = new Client({
         winston.info("Bot is up and running!");
     });
 
-    bot.on("guildMemberAdd", member => {
-        member.send("Willkommen");
+    bot.on("guildMemberAdd", (member) => {
+        userManager.afterJoinHandler(member);
     });
 
     bot.on("messageCreate", message => {
