@@ -13,7 +13,7 @@ export class DatabaseInterface {
         this.database.run("CREATE TABLE IF NOT EXISTS teamRoles (id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)");
         this.database.run("CREATE TABLE IF NOT EXISTS students (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
             " firstName" +
-            " TEXT NOT NULL, secondName TEXT, surName TEXT NOT NULL, class TEXT NOT NULL, year INTEGER NOT NULL)");
+            " TEXT NOT NULL, secondName TEXT, surName TEXT NOT NULL, class TEXT, year INTEGER NOT NULL)");
         this.database.run("CREATE TABLE IF NOT EXISTS verified (id TEXT NOT NULL PRIMARY KEY, studentId INTEGER NOT NULL" +
             ", FOREIGN KEY(studentId) REFERENCES students(id))");
         this.database.run("CREATE TABLE IF NOT EXISTS teamMembership (userId TEXT NOT NULL, team TEXT NOT NULL," +
@@ -113,29 +113,51 @@ export class DatabaseInterface {
         assertArgHasValue(firstName, "firstName");
         assertArgHasValue(surName, "surName");
 
+        if(secondName == null) {
+            return await this.getAsync(
+                "SELECT * FROM students WHERE firstName = $firstName AND surName = $surName",
+                {
+                    $firstName: firstName,
+                    $surName: surName
+                }
+            );
+        } else {
+
+            return await this.getAsync(
+                "SELECT * FROM students WHERE firstName = $firstName AND secondName = $secondName AND surName = $surName",
+                {
+                    $firstName: firstName,
+                    $secondName: secondName,
+                    $surName: surName
+                }
+            );
+        }
+    }
+
+    async completeVerification(userId, studentId) {
+        assertArgHasValue(userId, "userId");
+        assertArgHasValue(studentId, "studentId");
+
         return await this.runAsync(
-            "SELECT * FROM students WHERE firstName = $firstName AND secondName = $secondName AND surName = $surName",
-            {
-                $firstName: firstName,
-                $secondName: secondName,
-                $surName: surName
-            }
+            "INSERT INTO verified (id, studentId) VALUES ($id, $studentId)",
+            {$id: userId, $studentId: studentId}
         );
     }
 
     async getRolesForUser(userId) {
         assertArgHasValue(userId, "userId");
 
-        return await this.getAsync(
-            "SELECT yearRoles.id FROM yearRoles\n" +
-            "    JOIN verified ON verified.id = $userId\n" +
-            "    JOIN students ON students.id = verified.studentId\n" +
-            "        AND (yearRoles.class IS NULL OR yearRoles.class = students.class)\n" +
-            "        AND yearRoles.year = students.year" +
-            "UNION" +
-            "   SELECT teamRoles.id FROM teamRoles\n" +
-            "       JOIN verified ON verified.id = $userId\n" +
-            "       JOIN teamMembership ON teamMembership.userId = verified.id;",
+        return await this.allAsync(
+`SELECT teamRoles.id FROM teamRoles
+    JOIN verified ON verified.id = $userId
+    JOIN teamMembership ON teamMembership.userId = verified.id
+UNION
+    SELECT yearRoles.id FROM yearRoles
+        JOIN verified ON verified.id = $userId
+        JOIN students ON students.id = verified.studentId
+           AND (yearRoles.class IS NULL OR yearRoles.class = students.class)
+           AND yearRoles.year = students.year
+           `,
             {$userId: userId}
         );
     }
@@ -163,24 +185,25 @@ export class DatabaseInterface {
          * Due to the complexity this query should only be used if necessary and the role states
          * of a user are unknown.
          */
-        return await this.getAsync(
-            "SELECT id, (\n" +
-            "    id IN (\n" +
-            "        SELECT teamRoles.id FROM teamRoles\n" +
-            "            JOIN verified ON verified.id = $userId\n" +
-            "            JOIN teamMembership ON teamMembership.userId = verified.id\n" +
-            "        UNION\n" +
-            "            SELECT yearRoles.id FROM yearRoles\n" +
-            "                JOIN verified ON verified.id = $userId\n" +
-            "                JOIN students ON students.id = verified.studentId\n" +
-            "                   AND (yearRoles.class IS NULL OR yearRoles.class = students.class)\n" +
-            "                   AND yearRoles.year = students.year\n" +
-            "    )\n" +
-            ") AS belongs FROM (\n" +
-            "    SELECT id FROM teamRoles\n" +
-            "         UNION\n" +
-            "            SELECT id FROM yearRoles\n" +
-            ")\n",
+        return await this.allAsync(
+`SELECT id, (
+    id IN (
+        SELECT teamRoles.id FROM teamRoles
+            JOIN verified ON verified.id = $userId
+            JOIN teamMembership ON teamMembership.userId = verified.id
+        UNION
+            SELECT yearRoles.id FROM yearRoles
+                JOIN verified ON verified.id = $userId
+                JOIN students ON students.id = verified.studentId
+                   AND (yearRoles.class IS NULL OR yearRoles.class = students.class)
+                   AND yearRoles.year = students.year
+    )
+) AS belongs FROM (
+    SELECT id FROM teamRoles
+         UNION
+            SELECT id FROM yearRoles
+);
+`,
             {$userId: userId}
         );
     }
@@ -220,10 +243,30 @@ export class DatabaseInterface {
 
                 completed = true;
 
-                if (err !== null) {
+                if (err != null) {
                     reject(err);
                 } else {
                     resolve(row);
+                }
+            });
+        });
+    }
+
+    allAsync(stmt, ...args) {
+        return new Promise((resolve, reject) => {
+            let completed = false;
+
+            this.database.all(stmt, ...args, (err, rows) => {
+                if(completed) {
+                    return;
+                }
+
+                completed = true;
+
+                if(err != null) {
+                    reject(err);
+                } else {
+                    resolve(rows);
                 }
             });
         });

@@ -53,7 +53,7 @@ export class CommandRegistrar {
     }
 
     async registerGlobalCommands() {
-        const clientId = this.bot.application.id;
+        const clientId = this.application.bot.application.id;
 
         winston.verbose(`Registering global commands`);
         const commandData = this.globalCommandBuilders.map((builder) => builder.toJSON());
@@ -132,10 +132,10 @@ export class CommandRegistrar {
     async handleInteraction(interaction) {
         const commandName = interaction.commandName;
         const command = interaction.inGuild() ?
-            this.guildCommandMapping.get(commandName) :
+            this.guildCommandMapping.get(commandName) ?? this.globalCommandMapping.get(commandName) :
             this.globalCommandMapping.get(commandName);
 
-        if (command === null) {
+        if (command == null) {
             winston.warn(`Received interaction for command ${commandName} which does not belong to this bot!`);
             return;
         }
@@ -143,19 +143,21 @@ export class CommandRegistrar {
         try {
             await command.execute(interaction);
         } catch (e) {
-            winston.error(`Command failed to execute: ${e}`);
+            winston.error(`Command failed to execute:\n${formatError(e)}`);
 
             const errorMessage = `The command failed to execute with an internal error:\n${formatError(e)}`;
 
-            if(interaction.deferred) {
+            if(interaction.deferred || interaction.replied) {
                 await interaction.editReply({
                     content: errorMessage,
-                    components: []
+                    components: [],
+                    embeds: []
                 });
             } else {
                 await interaction.reply({
                     content: errorMessage,
-                    components: []
+                    components: [],
+                    embeds: []
                 });
             }
         }

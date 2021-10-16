@@ -69,10 +69,14 @@ const bot = new Client({
     winston.info("Database has been set up!");
 
     const callbackManager = new CallbackManager();
-    const application = {config, bot, database, callbackManager};
+    const application = {config, bot, database, callbackManager, userManager: null, commandRegistrar: null};
 
     const userManager = new UserManager(application);
+    application.userManager = userManager;
+
     const commandRegistrar = new CommandRegistrar(application);
+    application.commandRegistrar = commandRegistrar;
+
     const commandScanningPromise = commandRegistrar.scan();
 
 

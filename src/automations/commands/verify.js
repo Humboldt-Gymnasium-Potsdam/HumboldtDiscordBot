@@ -7,7 +7,7 @@ import {
 
 export default class VerifyCommand {
     constructor(application) {
-
+        this.application = application;
     }
 
     isGlobal() {
@@ -24,14 +24,14 @@ export default class VerifyCommand {
                 .setRequired(true)
             )
             .addStringOption((option) => option
-                .setName("second-name")
-                .setDescription("Zweitname")
-                .setRequired(false)
-            )
-            .addStringOption((option) => option
                 .setName("surname")
                 .setDescription("Nachname")
                 .setRequired(true)
+            )
+            .addStringOption((option) => option
+                .setName("second-name")
+                .setDescription("Zweitname")
+                .setRequired(false)
             );
     }
 
@@ -41,5 +41,7 @@ export default class VerifyCommand {
         const firstName = interaction.options.get("first-name").value;
         const secondName = interaction.options.get("second-name")?.value ?? null;
         const surName = interaction.options.get("surname").value;
+
+        await this.application.userManager.interactiveVerification(interaction, firstName, secondName, surName);
     }
 }
