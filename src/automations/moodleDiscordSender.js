@@ -1,25 +1,18 @@
 import * as Discord from "discord.js";
 import {TableInformation} from "../moodle/moodleData.js";
 import winston from "winston";
-import {formatError} from "../util/util.js";
+import {formatError, isCharNumber} from "../util/util.js";
 
 export class MoodleDiscordSender {
-    static processClassPing(input, config) {
-        const rolePing = config.roles.classes[input];
-
-        if (rolePing) {
-            return `<@&${rolePing.class}>`;
-        } else {
-            return input;
-        }
-    }
-
     constructor(application) {
         this.config = application.config;
         this.client = application.bot;
+        this.database = application.database;
+
+        this.classPingCache = new Map();
     }
 
-    generateMoodleMessage(data) {
+    async generateMoodleMessage(data) {
         return `
 Vertretungsplan für ${data.timeInfo.dayName}, den ${data.timeInfo.dayNumerical}.${data.timeInfo.monthNumerical} ${data.timeInfo.week}-Woche
 
@@ -27,35 +20,52 @@ Ordnungsdienste:
     - Diese Woche: ${MoodleDiscordSender.makeProperServiceInfo(data.properService.classThisWeek, data.properService.teacherThisWeek)}
     - Nächste Woche: ${MoodleDiscordSender.makeProperServiceInfo(data.properService.classNextWeek, data.properService.teacherNextWeek)}
 
-Aufstuhlung: ${MoodleDiscordSender.makeChairServiceInfo(data, this.config)}
+Aufstuhlung: ${await this.makeChairServiceInfo(data)}
 
 ${data.extraText.length > 0 ? "__" + data.extraText + "__" : ""}
 
 Vertretungen:
-${(() => {
-            return data.lessons.map((lesson) => {
-                let lessonBuffer = "";
-                lessonBuffer += `${
-                    lesson.classes.split(",").map((s) => MoodleDiscordSender.processClassPing(s.trim(), this.config))
-                }: ${lesson.lessons} ${lesson.newSubject} mit ${lesson.newTeacher}`;
-
-                if (lesson.room.length > 0) {
-                    lessonBuffer += ` in ${lesson.room}`;
-                }
-
-                if (lesson.info.length > 0) {
-                    lessonBuffer += ` => ${lesson.info}`;
-                }
-
-                return lessonBuffer;
-            }).join("\n");
-        })()}
+${await (async () => {
+    let outputBuffer = [];
+    
+    for(const lesson of data.lessons) {
+        let lessonBuffer = "";
+        
+        const classesBuffer = [];
+        for(const clazz of lesson.classes.split(",")) {
+            classesBuffer.push(await this.processClassPing(clazz.trim()));
+        }
+        
+        lessonBuffer += classesBuffer.join(", ");
+        lessonBuffer += " ";
+        lessonBuffer += lesson.lessons;
+        lessonBuffer += " "
+        lessonBuffer += lesson.newSubject;
+        lessonBuffer += " mit ";
+        lessonBuffer += lesson.newTeacher;
+        
+        if(lesson.room.length > 0) {
+            lessonBuffer += " in ";
+            lessonBuffer += lesson.room;
+        }
+        
+        if(lesson.info.length > 0) {
+            lessonBuffer += " => ";
+            lessonBuffer += lesson.info;
+        }
+        
+        outputBuffer.push(lessonBuffer);
+    }
+    
+    return outputBuffer.join("\n");
+})()}
 
 Zuletzt aktualisiert: <t:${Math.floor(data.processedAt.toDate().getTime() / 1000)}>
 `.trim();
     }
 
     moodleDataReceived(data) {
+        this.classPingCache.clear();
         return this.sendMessageToMoodleChannels(data);
     }
 
@@ -79,10 +89,10 @@ Zuletzt aktualisiert: <t:${Math.floor(data.processedAt.toDate().getTime() / 1000
         } else if (channel.type !== "GUILD_TEXT") {
             winston.warn(`Channel ${channel.id} has type ${channel.type}, expected text`);
         } else {
-            const messages = (() => {
+            const messages = await (async () => {
                 let split;
                 if (data instanceof TableInformation) {
-                    split = Discord.Util.splitMessage(this.generateMoodleMessage(data));
+                    split = Discord.Util.splitMessage(await this.generateMoodleMessage(data));
                 } else {
                     split = Discord.Util.splitMessage(data);
                 }
@@ -127,12 +137,35 @@ Zuletzt aktualisiert: <t:${Math.floor(data.processedAt.toDate().getTime() / 1000
         }
     }
 
-    static makeChairServiceInfo(data, config) {
+    async makeChairServiceInfo(data) {
         if (data.chairService.clazz.length < 1) {
             return "_Keine Angabe_";
         }
 
-        return `${MoodleDiscordSender.processClassPing(data.chairService.clazz, config)} nach ${data.chairService.subject} mit ${data.chairService.teacher}`;
+        return `${await this.processClassPing(data.chairService.clazz)} nach ${data.chairService.subject} mit ${data.chairService.teacher}`;
+    }
+
+    async processClassPing(input) {
+        if(this.classPingCache.has(input)) {
+            return this.classPingCache.get(input);
+        }
+
+        const lastChar = input.charAt(input.length - 1);
+
+        let data;
+        if(!isCharNumber(lastChar)) {
+            const year = input.substr(0, input.length - 1);
+            data = await this.database.getYearAndClassData(year, lastChar);
+        } else {
+            data = await this.database.getYearData(input);
+        }
+
+        if(data == null) {
+            this.classPingCache.set(input, input);
+            return input;
+        }
+
+        return `<@&${data.id}>`;
     }
 
     async updateMoodleMessages(

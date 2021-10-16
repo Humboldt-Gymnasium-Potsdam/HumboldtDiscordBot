@@ -2,6 +2,7 @@ import * as Path from "path";
 import * as fs from "../support/promiseFs.js";
 import PDFJs from "pdfjs-dist/legacy/build/pdf.js";
 import {LessonRow, TableInformation, Week} from "./moodleData.js";
+import {isCharNumber} from "../util/util.js";
 
 export class MoodleProcessor {
     static async process(data) {
@@ -309,33 +310,6 @@ const NextInfo = {
     Room: 13,
     Info: 14
 };
-
-function isCharNumber(char) {
-    switch (char) {
-        case "1":
-            return true;
-        case "2":
-            return true;
-        case "3":
-            return true;
-        case "4":
-            return true;
-        case "5":
-            return true;
-        case "6":
-            return true;
-        case "7":
-            return true;
-        case "8":
-            return true;
-        case "9":
-            return true;
-        case "0":
-            return true;
-        default:
-            return false;
-    }
-}
 
 function processProperServiceClass(currentLine) {
     const ret = {
