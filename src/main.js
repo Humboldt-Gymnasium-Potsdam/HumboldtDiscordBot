@@ -1,5 +1,4 @@
 import {Client, Intents} from "discord.js";
-// import {joinHandler} from "./handler/verifyHandler.js";
 import {loadBotConfig} from "./support/configLoader.js";
 import winston from "winston";
 import {MoodleInterface} from "./moodle/moodleInterface.js";
