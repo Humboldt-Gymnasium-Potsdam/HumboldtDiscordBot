@@ -69,9 +69,10 @@ const bot = new Client({
     winston.info("Database has been set up!");
 
     const callbackManager = new CallbackManager();
-    const userManager = new UserManager(config, database);
+    const application = {config, bot, database, callbackManager};
 
-    const commandRegistrar = new CommandRegistrar(config, bot, database, callbackManager);
+    const userManager = new UserManager(application);
+    const commandRegistrar = new CommandRegistrar(application);
     const commandScanningPromise = commandRegistrar.scan();
 
 
@@ -113,8 +114,8 @@ const bot = new Client({
         }
     });
 
-    const moodle = new MoodleInterface(winston, config);
-    const moodleSender = new MoodleDiscordSender(bot, config);
+    const moodle = new MoodleInterface(application);
+    const moodleSender = new MoodleDiscordSender(application);
 
     const startPromises = [
         moodle.performLogin(),

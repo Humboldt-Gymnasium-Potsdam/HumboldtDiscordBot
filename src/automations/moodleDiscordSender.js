@@ -14,9 +14,9 @@ export class MoodleDiscordSender {
         }
     }
 
-    constructor(client, config) {
-        this.config = config;
-        this.client = client;
+    constructor(application) {
+        this.config = application.config;
+        this.client = application.bot;
     }
 
     generateMoodleMessage(data) {

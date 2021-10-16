@@ -6,11 +6,8 @@ import {
 } from "@discordjs/builders";
 
 export default class VerifyCommand {
-    constructor(config, bot, database, callbackManager) {
-        this.config = config;
-        this.bot = bot;
-        this.database = database;
-        this.callbackManager = callbackManager;
+    constructor(application) {
+
     }
 
     isGlobal() {

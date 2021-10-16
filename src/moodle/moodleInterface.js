@@ -4,16 +4,16 @@ import cheerio from "cheerio";
 import * as domHandler from "domhandler";
 import moment from "moment";
 import {MoodleProcessor} from "./moodleProcessor.js";
+import winston from "winston";
 
 export class MoodleInterface extends EventEmitter {
-    constructor(logger, config) {
+    constructor(application) {
         super();
 
         this.timeoutId = null;
         this.nextScheduledScrape = null;
 
-        this.logger = logger;
-        this.config = config.moodle;
+        this.config = application.config.moodle;
         this.cookieJar = requestModule.jar();
         this.request = requestModule.defaults({
             jar: this.cookieJar,
@@ -22,7 +22,7 @@ export class MoodleInterface extends EventEmitter {
     }
 
     scrapeNow() {
-        this.logger.info("Scraping moodle now...");
+        winston.info("Scraping moodle now...");
 
         return new Promise((resolve, reject) => {
             let responseData = "";
@@ -48,7 +48,7 @@ export class MoodleInterface extends EventEmitter {
                                 continue;
                             }
 
-                            this.logger.verbose(`Considering ${html(child)} as possible download link...`);
+                            winston.verbose(`Considering ${html(child)} as possible download link...`);
                             if (child.tagName === "span" && html(child).text().startsWith(this.config.texts.tableName)) {
                                 const href = html(a).attr("href")?.trim() ?? "";
 
@@ -58,7 +58,7 @@ export class MoodleInterface extends EventEmitter {
                                     ));
                                 }
 
-                                this.logger.debug(`Moodle table download link is ${href}`);
+                                winston.debug(`Moodle table download link is ${href}`);
                                 return resolve(href);
                             }
                         }
@@ -144,10 +144,10 @@ export class MoodleInterface extends EventEmitter {
 
     performScrape() {
         return this.scrapeNow().then((data) => {
-            this.logger.verbose(`Moodle data loaded for ${data.timeInfo.dayNumerical}.${data.timeInfo.monthNumerical}`);
+            winston.verbose(`Moodle data loaded for ${data.timeInfo.dayNumerical}.${data.timeInfo.monthNumerical}`);
             this.emit("data", data);
         }).catch((error) => {
-            this.logger.verbose(`Failed to load moodle data: ${error}`);
+            winston.verbose(`Failed to load moodle data: ${error}`);
             this.emit("error", error);
         });
     }

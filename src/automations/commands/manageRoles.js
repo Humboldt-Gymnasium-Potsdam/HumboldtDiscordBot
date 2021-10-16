@@ -10,11 +10,10 @@ import {MessageActionRow, MessageButton} from "discord.js";
 import {formatError} from "../../util/util.js";
 
 export default class ManageRolesCommand {
-    constructor(config, bot, database, callbackManager) {
-        this.config = config;
-        this.bot = bot;
-        this.database = database;
-        this.callbackManager = callbackManager;
+    constructor(application) {
+        this.config = application.config;
+        this.bot = application.bot;
+        this.database = application.database;
     }
 
     asBuilder() {

@@ -3,9 +3,9 @@ import {computeArrayPatches} from "../util/util.js";
 import {MessageEmbed} from "discord.js";
 
 export class UserManager {
-    constructor(config, database) {
-        this.config = config;
-        this.database = database;
+    constructor(application) {
+        this.config = application.config;
+        this.database = application.database;
     }
 
     async afterJoinHandler(user) {

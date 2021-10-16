@@ -7,13 +7,10 @@ import {dirNameOfModule, formatError} from "../util/util.js";
 import {resolveElevatedPermissionRoles} from "../support/configLoader.js";
 
 export class CommandRegistrar {
-    constructor(config, bot, database, callbackManager) {
-        this.config = config;
-        this.bot = bot;
-        this.database = database;
-        this.callbackManager = callbackManager;
+    constructor(application) {
+        this.application = application;
 
-        this.rest = new REST({version: "9"}).setToken(config.token);
+        this.rest = new REST({version: "9"}).setToken(application.config.token);
 
         this.commandsDir = path.resolve(dirNameOfModule(import.meta), "commands");
 
@@ -36,10 +33,7 @@ export class CommandRegistrar {
         const commands = await Promise.all(
             files.map(
                 (file) => import(path.resolve(this.commandsDir, file)).then((module) => new module.default(
-                    this.config,
-                    this.bot,
-                    this.database,
-                    this.callbackManager
+                    this.application
                 ))
             )
         );
@@ -75,7 +69,7 @@ export class CommandRegistrar {
     }
 
     async registerCommandsForGuild(guild) {
-        const clientId = this.bot.application.id;
+        const clientId = this.application.bot.application.id;
         const guildId = guild.id;
 
         winston.verbose(`Registering guild commands for guild ${guildId}`);
@@ -95,7 +89,7 @@ export class CommandRegistrar {
 
         const commands = await guild.commands.fetch();
         commands.forEach((commandScope) => {
-            if (commandScope.applicationId !== this.bot.application.id) {
+            if (commandScope.applicationId !== this.application.bot.application.id) {
                 return;
             }
 
@@ -114,7 +108,7 @@ export class CommandRegistrar {
 
             const requiredPermissions = command.getRequiredPermissions();
             winston.verbose(`Command ${commandName} requires permissions [${requiredPermissions.join(", ")}]`);
-            const allowedRoles = resolveElevatedPermissionRoles(this.config, requiredPermissions);
+            const allowedRoles = resolveElevatedPermissionRoles(this.application.config, requiredPermissions);
             winston.verbose(`Resolved role id's for ${commandName} are [${allowedRoles.join(", ")}]`);
 
             const permissions = allowedRoles.map((roleId) => ({
