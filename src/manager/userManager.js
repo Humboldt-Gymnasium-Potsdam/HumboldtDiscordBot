@@ -244,7 +244,7 @@ export class UserManager {
                 interaction.user.id,
                 null,
                 team,
-                interaction.permissionLevel
+                actionData.permissionLevel
             )) {
                 await interaction.editReply("You don't have permission to perform this action!");
                 return;

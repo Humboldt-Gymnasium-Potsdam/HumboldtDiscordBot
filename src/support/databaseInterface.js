@@ -240,8 +240,7 @@ UNION
 
         return await this.getAsync(
 `SELECT teamMembership.* FROM teamMembership
-    JOIN students ON students.id = $studentId
-    WHERE teamMembership.team = $team
+    WHERE teamMembership.team = $team AND teamMembership.studentId = $studentId
 `,
             {$studentId: studentId, $team: team}
         )

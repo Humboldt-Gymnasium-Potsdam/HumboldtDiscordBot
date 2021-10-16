@@ -1,9 +1,7 @@
 import {
     SlashCommandBuilder,
-    SlashCommandNumberOption,
-    SlashCommandRoleOption,
-    SlashCommandStringOption
 } from "@discordjs/builders";
+import {CommonCommandOptions} from "./data/commonCommandOptions.js";
 
 export default class VerifyCommand {
     constructor(application) {
@@ -17,22 +15,10 @@ export default class VerifyCommand {
     asBuilder() {
         return new SlashCommandBuilder()
             .setName("verify")
-            .setDescription("Verifiziert einen Nutzer")
-            .addStringOption((option) => option
-                .setName("first-name")
-                .setDescription("Vorname")
-                .setRequired(true)
-            )
-            .addStringOption((option) => option
-                .setName("surname")
-                .setDescription("Nachname")
-                .setRequired(true)
-            )
-            .addStringOption((option) => option
-                .setName("second-name")
-                .setDescription("Zweitname")
-                .setRequired(false)
-            );
+            .setDescription("Verifies a user")
+            .addStringOption(CommonCommandOptions.firstNameOption)
+            .addStringOption(CommonCommandOptions.surnameOption)
+            .addStringOption(CommonCommandOptions.secondNameOption);
     }
 
     async execute(interaction) {

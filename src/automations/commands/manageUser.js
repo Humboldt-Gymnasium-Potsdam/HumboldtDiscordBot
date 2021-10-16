@@ -1,10 +1,7 @@
 import {
-    SlashCommandBuilder,
-    SlashCommandNumberOption,
-    SlashCommandRoleOption,
-    SlashCommandStringOption,
-    SlashCommandUserOption
+    SlashCommandBuilder
 } from "@discordjs/builders";
+import {CommonCommandOptions} from "./data/commonCommandOptions.js";
 
 export default class ManageUserCommand {
     constructor(application) {
@@ -12,41 +9,6 @@ export default class ManageUserCommand {
     }
 
     asBuilder() {
-        const teamOption = new SlashCommandStringOption()
-            .setName("team")
-            .setDescription("The team to target")
-            .setRequired(true);
-
-        const userOption = new SlashCommandUserOption()
-            .setName("user")
-            .setDescription("The user to target")
-            .setRequired(true);
-
-        const firstNameOption = new SlashCommandStringOption()
-            .setName("first-name")
-            .setDescription("The first name of the student")
-            .setRequired(true);
-
-        const surnameOption = new SlashCommandStringOption()
-            .setName("surname")
-            .setDescription("The surname of the student")
-            .setRequired(true);
-
-        const secondNameOption = new SlashCommandStringOption()
-            .setName("second-name")
-            .setDescription("The second name of the student, if any")
-            .setRequired(false);
-
-        const permissionLevelOption = new SlashCommandNumberOption()
-            .setName("permission-level")
-            .setDescription("The level of permissions the user should have")
-            .addChoices([
-                ["member", 0],
-                ["trusted", 1],
-                ["owner", 2]
-            ])
-            .setRequired(true);
-
         return new SlashCommandBuilder()
             .setName("manage-user")
             .setDescription("Manages users and their permissions and teams")
@@ -57,54 +19,54 @@ export default class ManageUserCommand {
                 .addSubcommand((command) => command
                     .setName("join-user")
                     .setDescription("Joins a discord user to a team")
-                    .addStringOption(teamOption)
-                    .addUserOption(userOption)
-                    .addNumberOption(permissionLevelOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addUserOption(CommonCommandOptions.userOption)
+                    .addNumberOption(CommonCommandOptions.permissionLevelOption)
                 )
                 .addSubcommand((command) => command
                     .setName("join-student")
                     .setDescription("Joins a student to a team")
-                    .addStringOption(teamOption)
-                    .addStringOption(firstNameOption)
-                    .addStringOption(surnameOption)
-                    .addNumberOption(permissionLevelOption)
-                    .addStringOption(secondNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addStringOption(CommonCommandOptions.firstNameOption)
+                    .addStringOption(CommonCommandOptions.surnameOption)
+                    .addNumberOption(CommonCommandOptions.permissionLevelOption)
+                    .addStringOption(CommonCommandOptions.secondNameOption)
                 )
                 .addSubcommand((command) => command
                     .setName("remove-user")
                     .setDescription("Removes a discord user from a team")
-                    .addStringOption(teamOption)
-                    .addUserOption(userOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addUserOption(CommonCommandOptions.userOption)
                 )
                 .addSubcommand((command) => command
                     .setName("remove-student")
                     .setDescription("Removes a student from a team")
-                    .addStringOption(teamOption)
-                    .addStringOption(firstNameOption)
-                    .addStringOption(surnameOption)
-                    .addStringOption(secondNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addStringOption(CommonCommandOptions.firstNameOption)
+                    .addStringOption(CommonCommandOptions.surnameOption)
+                    .addStringOption(CommonCommandOptions.secondNameOption)
                 )
                 .addSubcommand((command) => command
                     .setName("set-user-permission-level")
                     .setDescription("Changes the permission level for a discord user")
-                    .addStringOption(teamOption)
-                    .addUserOption(userOption)
-                    .addNumberOption(permissionLevelOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addUserOption(CommonCommandOptions.userOption)
+                    .addNumberOption(CommonCommandOptions.permissionLevelOption.setRequired(true))
                 )
                 .addSubcommand((command) => command
                     .setName("set-student-permission-level")
                     .setDescription("Changes the permission level for a student")
-                    .addStringOption(teamOption)
-                    .addStringOption(firstNameOption)
-                    .addStringOption(surnameOption)
-                    .addNumberOption(permissionLevelOption)
-                    .addStringOption(secondNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
+                    .addStringOption(CommonCommandOptions.firstNameOption)
+                    .addStringOption(CommonCommandOptions.surnameOption)
+                    .addNumberOption(CommonCommandOptions.permissionLevelOption.setRequired(true))
+                    .addStringOption(CommonCommandOptions.secondNameOption)
                 )
             )
             .addSubcommand((command) => command
                 .setName("reload-data")
                 .setDescription("Reloads the roles and user name for a user")
-                .addUserOption(userOption)
+                .addUserOption(CommonCommandOptions.userOption)
             )
     }
 
@@ -129,7 +91,7 @@ export default class ManageUserCommand {
                 case "join-user":
                     actionData.action = "join";
                     actionData.userId = interaction.options.get("user").value;
-                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level")?.value ?? 0;
                     break;
 
                 case "join-student":
@@ -137,7 +99,7 @@ export default class ManageUserCommand {
                     actionData.firstName = interaction.options.get("first-name").value;
                     actionData.secondName = interaction.options.get("second-name")?.value;
                     actionData.surname = interaction.options.get("surname").value;
-                    actionData.permissionLevel = interaction.options.get("permission-level").value;
+                    actionData.permissionLevel = interaction.options.get("permission-level")?.value ?? 0;
                     break;
 
                 case "remove-user":

@@ -8,6 +8,7 @@ import winston from "winston";
 import {resolveTemplateString} from "../../support/configLoader.js";
 import {MessageActionRow, MessageButton} from "discord.js";
 import {formatError} from "../../util/util.js";
+import {CommonCommandOptions} from "./data/commonCommandOptions.js";
 
 export default class ManageRolesCommand {
     constructor(application) {
@@ -20,11 +21,6 @@ export default class ManageRolesCommand {
         const roleOption = new SlashCommandRoleOption()
             .setName("role")
             .setDescription("The role to import")
-            .setRequired(true);
-
-        const teamNameOption = new SlashCommandStringOption()
-            .setName("team-name")
-            .setDescription("The name of the team")
             .setRequired(true);
 
         const yearOption = new SlashCommandNumberOption()
@@ -48,7 +44,7 @@ export default class ManageRolesCommand {
                     .setName("team")
                     .setDescription("Imports a team role")
                     .addRoleOption(roleOption)
-                    .addStringOption(teamNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
                 )
                 .addSubcommand((command) => command
                     .setName("year")
@@ -64,7 +60,7 @@ export default class ManageRolesCommand {
                 .addSubcommand((command) => command
                     .setName("team")
                     .setDescription("Creates a team role")
-                    .addStringOption(teamNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
                 )
                 .addSubcommand((command) => command
                     .setName("year")
@@ -79,7 +75,7 @@ export default class ManageRolesCommand {
                 .addSubcommand((command) => command
                     .setName("team")
                     .setDescription("Deletes a team")
-                    .addStringOption(teamNameOption)
+                    .addStringOption(CommonCommandOptions.teamOption)
                 )
                 .addSubcommand((command) => command
                     .setName("year")
@@ -298,7 +294,7 @@ export default class ManageRolesCommand {
     gatherInteractionData(interaction) {
         const isTeam = interaction.options.getSubcommand() === "team";
 
-        const name = isTeam ? interaction.options.get("team-name").value : interaction.options.get("class")?.value;
+        const name = isTeam ? interaction.options.get("team").value : interaction.options.get("class")?.value;
         const year = isTeam ? null : interaction.options.get("year").value;
 
         return {isTeam, name, year};
