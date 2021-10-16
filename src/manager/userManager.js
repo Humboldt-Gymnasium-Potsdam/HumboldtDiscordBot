@@ -279,6 +279,10 @@ export class UserManager {
             .then((guilds) => guilds.first().fetch())
             .then((guild) => guild.members.fetch(userId))
             .catch((err) => {
+                if(err.code === 10007 /* user not a member of guild */) {
+                    return null;
+                }
+
                 throw err;
             });
     }
