@@ -16,8 +16,11 @@ export class CommandRegistrar {
         this.rest = new REST({version: "9"}).setToken(config.token);
 
         this.commandsDir = path.resolve(dirNameOfModule(import.meta), "commands");
-        this.commandMapping = new Map();
-        this.commandBuilders = [];
+
+        this.guildCommandMapping = new Map();
+        this.guildCommandBuilders = [];
+        this.globalCommandMapping = new Map();
+        this.globalCommandBuilders = [];
     }
 
     async scan() {
@@ -45,9 +48,30 @@ export class CommandRegistrar {
         commands.forEach((command) => {
             const builder = command.asBuilder();
 
-            this.commandMapping.set(builder.name, command);
-            this.commandBuilders.push(builder);
+            if(command.isGlobal != null && command.isGlobal()) {
+                this.globalCommandMapping.set(builder.name, command);
+                this.globalCommandBuilders.push(builder);
+            } else {
+                this.guildCommandMapping.set(builder.name, command);
+                this.guildCommandBuilders.push(builder);
+            }
         });
+    }
+
+    async registerGlobalCommands() {
+        const clientId = this.bot.application.id;
+
+        winston.verbose(`Registering global commands`);
+        const commandData = this.globalCommandBuilders.map((builder) => builder.toJSON());
+
+        await this.rest.put(
+            Routes.applicationCommands(clientId),
+            {
+                body: commandData
+            }
+        );
+
+        winston.verbose(`Registered ${commandData.length} global commands`);
     }
 
     async registerCommandsForGuild(guild) {
@@ -55,7 +79,7 @@ export class CommandRegistrar {
         const guildId = guild.id;
 
         winston.verbose(`Registering guild commands for guild ${guildId}`);
-        const commandData = this.commandBuilders.map((builder) => builder.toJSON());
+        const commandData = this.guildCommandBuilders.map((builder) => builder.toJSON());
 
         await this.rest.put(
             Routes.applicationGuildCommands(clientId, guildId),
@@ -76,7 +100,7 @@ export class CommandRegistrar {
             }
 
             const commandName = commandScope.name;
-            const command = this.commandMapping.get(commandName);
+            const command = this.guildCommandMapping.get(commandName);
 
             if (command === null) {
                 winston.warn(`Guild ${guildId} has a command ${commandName} which is from this bot, but not registered as a Javascript file?!`);
@@ -113,7 +137,9 @@ export class CommandRegistrar {
 
     async handleInteraction(interaction) {
         const commandName = interaction.commandName;
-        const command = this.commandMapping.get(commandName);
+        const command = interaction.inGuild() ?
+            this.guildCommandMapping.get(commandName) :
+            this.globalCommandMapping.get(commandName);
 
         if (command === null) {
             winston.warn(`Received interaction for command ${commandName} which does not belong to this bot!`);

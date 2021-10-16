@@ -86,12 +86,22 @@ const bot = new Client({
     bot.on("messageCreate", message => {
         if(!message.author.bot) {
             if(message.guild !== null) {
-                if(message.content === `<@!${bot.user.id}> reload-slash-commands`) {
-                    commandScanningPromise
-                        .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
-                        .then(() => message.reply("Slash commands reloaded!"));
-                } else if(message.content === `<@!${bot.user.id}> simulate-join`) {
-                    userManager.afterJoinHandler(message.member);
+                switch (message.content) {
+                    case `<@!${bot.user.id}> reload-guild-slash-commands`:
+                        commandScanningPromise
+                            .then(() => commandRegistrar.registerCommandsForGuild(message.guild))
+                            .then(() => message.reply("Guild slash commands reloaded!"));
+                        break;
+
+                    case `<@!${bot.user.id}> reload-global-slash-commands`:
+                        commandScanningPromise
+                            .then(() => commandRegistrar.registerGlobalCommands())
+                            .then(() => message.reply("Global slash commands reloaded!"));
+                        break;
+
+                    case `<@!${bot.user.id}> simulate-join`:
+                        userManager.afterJoinHandler(message.member);
+                        break;
                 }
             }
         }
