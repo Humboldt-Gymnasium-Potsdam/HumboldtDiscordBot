@@ -142,7 +142,7 @@ export class UserManager {
                     .then((guild) => guild.members.fetch(interaction.user));
             }
 
-            await this.applyVerifiedData(member, studentData);
+            await this.applyVerifiedData(member, studentData, member.roles.cache.size > 0);
 
             await buttonInteraction.editReply({
                 content: "Alles klar, deine Rollen wurden dir zugewiesen. Viel Spaß!",
