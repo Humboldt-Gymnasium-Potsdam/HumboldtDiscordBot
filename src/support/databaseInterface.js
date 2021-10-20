@@ -162,6 +162,7 @@ WHERE firstName = $firstName
     JOIN verified ON verified.id = $userId
     JOIN students ON students.id = verified.studentId
     JOIN teamMembership ON teamMembership.studentId = students.id
+    WHERE teamRoles.name = teamMembership.team
 UNION
     SELECT yearRoles.id FROM yearRoles
         JOIN verified ON verified.id = $userId
@@ -203,6 +204,7 @@ UNION
             JOIN verified ON verified.id = $userId
             JOIN students ON students.id = verified.studentId
             JOIN teamMembership ON teamMembership.studentId = students.id
+            WHERE teamRoles.name = teamMembership.team
         UNION
             SELECT yearRoles.id FROM yearRoles
                 JOIN verified ON verified.id = $userId
