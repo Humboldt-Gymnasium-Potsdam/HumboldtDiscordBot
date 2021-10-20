@@ -191,6 +191,8 @@ export class UserManager {
             await user.setNickname(newNickname);
         }
 
+        const verifiedRoleId = this.config.roles.verified;
+
         winston.debug(`Applying roles to user ${user.id}, extensive = ${extensive}`);
         if (!extensive) {
             const roleIdsObjs = await this.database.getRolesForUser(user.id);
@@ -201,6 +203,7 @@ export class UserManager {
             }
 
             const roleIds = roleIdsObjs.map((obj) => obj.id);
+            roleIds.push(verifiedRoleId);
             winston.verbose(`user = ${user.id}, roles = [${roleIds.join(", ")}]`);
             await user.roles.add(roleIds);
         } else {
@@ -209,6 +212,8 @@ export class UserManager {
             winston.verbose(`Performing complete role listing for ${user.id}...`);
             const roleListing = await this.database.getCompleteRoleListingForUser(user.id)
                 .then((rows) => rows.map((row) => ({value: row.id, belongs: row.belongs === 1})));
+
+            roleListing.push({value: verifiedRoleId, belongs: true});
 
             const patches = computeArrayPatches(currentUserRoles, roleListing);
             winston.verbose(`Current roles of ${user.id}    : [${currentUserRoles.join(", ")}]`);
