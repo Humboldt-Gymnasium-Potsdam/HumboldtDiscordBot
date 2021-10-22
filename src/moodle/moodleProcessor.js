@@ -84,10 +84,10 @@ export class MoodleProcessor {
                     if (line.startsWith("Vertretungsplan Klasse")) {
                         let trimmedLine = line.substr(22).trim();
 
-                        let dotIndex = trimmedLine.indexOf(".");
+                        let dotIndex = indexOfAny(trimmedLine, ".", "/");
                         planInfo.timeInfo.dayNumerical = parseInt(trimmedLine.substring(0, dotIndex), 10);
                         trimmedLine = trimmedLine.substr(dotIndex + 1);
-                        dotIndex = trimmedLine.indexOf(".");
+                        dotIndex = indexOfAny(trimmedLine, ".", "/");
                         planInfo.timeInfo.monthNumerical = parseInt(trimmedLine.substring(0, dotIndex), 10);
                         // Remove " / "
                         trimmedLine = trimmedLine.substr(dotIndex + 4);
@@ -365,4 +365,16 @@ function processProperServiceClass(currentLine) {
 function indexOfOrEnd(str, search) {
     const idx = str.indexOf(search);
     return idx === -1 ? str.length : idx;
+}
+
+function indexOfAny(str, ...searches) {
+    for (const c of searches) {
+        const idx = str.indexOf(c);
+
+        if(idx !== -1) {
+            return idx;
+        }
+    }
+
+    return -1;
 }
