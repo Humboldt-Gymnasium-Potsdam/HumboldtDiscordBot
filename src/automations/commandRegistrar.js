@@ -72,8 +72,10 @@ export class CommandRegistrar {
         const clientId = this.application.bot.application.id;
         const guildId = guild.id;
 
-        winston.verbose(`Registering guild commands for guild ${guildId}`);
-        const commandData = this.guildCommandBuilders.map((builder) => builder.toJSON());
+        winston.verbose(`Registering guild commands for guild ${guildId} (including global commands)`);
+        const commandData = this.guildCommandBuilders
+            .concat(this.globalCommandBuilders)
+            .map((builder) => builder.toJSON());
 
         await this.rest.put(
             Routes.applicationGuildCommands(clientId, guildId),
@@ -96,8 +98,10 @@ export class CommandRegistrar {
             const commandName = commandScope.name;
             const command = this.guildCommandMapping.get(commandName);
 
-            if (command === null) {
-                winston.warn(`Guild ${guildId} has a command ${commandName} which is from this bot, but not registered as a Javascript file?!`);
+            if (command == null) {
+                if(!this.globalCommandMapping.has(commandName)) {
+                    winston.warn(`Guild ${guildId} has a command ${commandName} which is from this bot, but not registered as a Javascript file?!`);
+                }
                 return;
             }
 
