@@ -87,10 +87,16 @@ export class MoodleProcessor {
                         let dotIndex = indexOfAny(trimmedLine, ".", "/");
                         planInfo.timeInfo.dayNumerical = parseInt(trimmedLine.substring(0, dotIndex), 10);
                         trimmedLine = trimmedLine.substr(dotIndex + 1);
-                        dotIndex = indexOfAny(trimmedLine, ".", "/");
+
+                        let missingDateSeparator = false;
+                        dotIndex = trimmedLine.indexOf(".");
+                        if(dotIndex === -1) {
+                            missingDateSeparator = true;
+                            dotIndex = trimmedLine.indexOf(" ");
+                        }
                         planInfo.timeInfo.monthNumerical = parseInt(trimmedLine.substring(0, dotIndex), 10);
                         // Remove " / "
-                        trimmedLine = trimmedLine.substr(dotIndex + 4);
+                        trimmedLine = trimmedLine.substr(dotIndex + (missingDateSeparator ? 3 : 4));
                         const spaceIndex = trimmedLine.indexOf(" ");
                         planInfo.timeInfo.dayName = trimmedLine.substring(0, spaceIndex);
 
