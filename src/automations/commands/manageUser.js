@@ -65,8 +65,8 @@ export default class ManageUserCommand {
             )
             .addSubcommand((command) => command
                 .setName("reload-data")
-                .setDescription("Reloads the roles and user name for a user")
-                .addUserOption(CommonCommandOptions.userOption)
+                .setDescription("Reloads the roles and user name for a user or everyone")
+                .addUserOption(CommonCommandOptions.userOption.setRequired(false))
             )
     }
 
@@ -77,7 +77,13 @@ export default class ManageUserCommand {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         if(subcommand === "reload-data") {
-            await this.userManager.reloadUserData(interaction, interaction.options.get("user").value);
+            const user = interaction.options.get("user");
+
+            if(user != null) {
+                await this.userManager.reloadUserData(interaction, interaction.options.get("user").value);
+            } else {
+                await this.userManager.reloadAllUserData(interaction, interaction.guild);
+            }
             return;
         }
 

@@ -164,6 +164,90 @@ export class UserManager {
         });
     }
 
+    async reloadAllUserData(interaction, guild) {
+        const components = new MessageActionRow()
+            .addComponents(
+                new MessageButton()
+                    .setLabel("I understand, proceed")
+                    .setCustomId("confirm")
+                    .setStyle("SUCCESS"),
+                new MessageButton()
+                    .setLabel("Cancel")
+                    .setCustomId("cancel")
+                    .setStyle("DANGER")
+            );
+
+
+        await interaction.deferReply({ephemeral: true});
+        const message = await interaction.editReply({
+            content: "This action is very heavy and may take a while as it reloads the data for every member!",
+            components: [components],
+        });
+
+        await message.awaitMessageComponent({ componentType: "BUTTON", time: 60000 }).then(async (buttonInteraction) => {
+            if(buttonInteraction.customId === "cancel") {
+                await buttonInteraction.update({
+                    content: "Alright, data reload has been aborted!",
+                    components: [],
+                    embeds: []
+                });
+                return;
+            }
+
+            let startIndex = 0;
+            let notVerifiedUsers = 0;
+            let appliedUsers = 0;
+
+            await buttonInteraction.update({
+                content: "Working...",
+                components: [],
+                embeds: []
+            });
+
+            while(true) {
+                const members = await guild.members.list({
+                    after: startIndex,
+                    limit: 1000
+                });
+
+                for(const member of members.values()) {
+                    if(member.user.bot) {
+                        continue;
+                    }
+
+                    const studentData = await this.database.getStudentDataForUser(member.id);
+
+                    if(studentData == null) {
+                        notVerifiedUsers++;
+                        continue;
+                    }
+
+                    await this.applyVerifiedData(member, studentData, true);
+                    appliedUsers++;
+                }
+
+                if(members.size < 1000) {
+                    break;
+                }
+            }
+
+            await buttonInteraction.editReply({
+                content: `Updated ${appliedUsers} users, ${notVerifiedUsers} are not verified.`
+            });
+        }).catch(async (err) => {
+            if (err.code === "INTERACTION_COLLECTOR_ERROR") {
+                await interaction.editReply({
+                    content: "You did not confirm the action within 60 seconds!",
+                    components: [],
+                    embeds: []
+                });
+                return;
+            }
+
+            throw err;
+        });
+    }
+
     async reloadUserData(interaction, userId) {
         await interaction.deferReply({ephemeral: true});
 
